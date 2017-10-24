@@ -1,21 +1,17 @@
-from telegram.ext.commandhandler import CommandHandler
 from telegram.ext.updater import Updater
 
 import config
+from handlers.handlers import StartHandler, PhotoHandler
 
 
-def handle_start(bot, update):
-    ...
-
-
-start_handler = CommandHandler(command='status', callback=handle_start)
+handlers = [StartHandler().get_handler(), PhotoHandler().get_handler()]
 
 
 def main():
     updater = Updater(config.TOKEN)
     dp = updater.dispatcher
 
-    dp.add_handler(start_handler)
+    [dp.add_handler(handler) for handler in handlers]
     updater.start_polling()
     updater.idle()
 
