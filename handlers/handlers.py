@@ -5,6 +5,7 @@ from telegram.ext.commandhandler import CommandHandler
 from telegram.ext.filters import Filters
 from telegram.ext.messagehandler import MessageHandler
 from telegram.update import Update
+from repository import files
 
 WELCOME_MESSAGE = 'Добро пожаловать, отправь мне фотографию, я передам её нашим модераторам'
 
@@ -37,11 +38,7 @@ class PhotoHandler(Handler):
 
     def handle(self, bot: Bot, update: Update):
         file_id = update.message.photo[-1].file_id
-        file_name = uuid.uuid4()
-        file = open(file=f'images/{str(file_name)}.jpg', mode='wb')
-        image = bot.get_file(file_id=file_id)
-        image.download(out=file)
-        pass
+        files.save_file(file_id)
 
     def get_handler(self):
         return MessageHandler(filters=self.filter, callback=self.handle)
