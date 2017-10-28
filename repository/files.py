@@ -1,5 +1,5 @@
 import os
-
+import hashlib
 from telegram.bot import Bot
 
 import config
@@ -29,3 +29,12 @@ def save_file(file_id):
         else:
             continue
     return {'image_identifier': file_id, 'file_path': file_path}
+
+
+def get_md5_hash(file_path):
+    if os.path.exists(file_path):
+        file = open(file=file_path, mode='rb')
+        has = hashlib.md5(file.read())
+        return has.hexdigest()
+    else:
+        raise FileNotFoundError
