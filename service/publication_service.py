@@ -52,7 +52,8 @@ def process_moderation(interval):
             try:
                 publication = on_moderation.pop(0)
                 votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
-                if datetime.datetime.now() > (publication.creation_date + timedelta(hours=config.VOTE_TIME_LIMIT)) and len(votes) > 0:
+                if datetime.datetime.now() > (
+                            publication.creation_date + timedelta(hours=config.VOTE_TIME_LIMIT)) and len(votes) > 0:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
@@ -74,7 +75,8 @@ def process_moderation(interval):
 
 
 def publication_loop(interval):
-    last_publication_time = datetime.datetime.now()
+    now = datetime.datetime.now()
+    last_publication_time = now - timedelta(minutes=now.minute % 30, seconds=now.second)
     while 1:
         if datetime.datetime.now() > last_publication_time + timedelta(minutes=config.PUBLICATION_INTERVAL):
             last_publication_time = datetime.datetime.now()
