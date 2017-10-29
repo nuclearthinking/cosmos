@@ -1,10 +1,29 @@
 from ruamel.yaml.main import YAML
 
-config = YAML().load(open('config.yml').read())
 
-TOKEN = config.get('token')
-IMAGES_DIR = config.get('images_dir')
-MODERATION_CHAT_ID = config.get('moderators_channel')
-PUBLICATION_CHANNEL = config.get('publications_channel')
-PUBLICATION_INTERVAL = config.get('publication_interval')
-VOTE_TIME_LIMIT = config.get('moderation_timeout')
+def get_setting(setting_name):
+    return YAML().load(open('config.yml').read()).get(setting_name)
+
+
+def get_token():
+    return get_setting('token')
+
+
+def get_images_dir():
+    return get_setting('images_dir')
+
+
+def get_moderation_chat():
+    return get_setting('moderators_channel')
+
+
+def get_publication_channel():
+    return get_setting('publications_channel')
+
+
+def get_publication_interval():
+    return get_setting('publication_interval')
+
+
+def get_moderation_time_limit():
+    return get_setting('moderation_timeout')

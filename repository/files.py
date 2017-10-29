@@ -5,17 +5,15 @@ from telegram.bot import Bot
 import config
 import uuid
 
-images_dir = config.IMAGES_DIR
-
 
 def save_file(file_id):
-    bot = Bot(token=config.TOKEN)
+    bot = Bot(token=config.get_token())
     while 1:
-        if not os.path.exists(images_dir):
-            os.mkdir(images_dir)
+        if not os.path.exists(config.get_images_dir()):
+            os.mkdir(config.get_images_dir())
         image_identifier = str(uuid.uuid4())
         sub_dir = image_identifier.split('-')[:1][0]
-        sub_dir_path = os.path.join(images_dir, sub_dir)
+        sub_dir_path = os.path.join(config.get_images_dir(), sub_dir)
         if not os.path.exists(sub_dir_path):
             os.mkdir(sub_dir_path)
         file_name = f'{"".join(image_identifier.split("-")[1:])}.jpg'

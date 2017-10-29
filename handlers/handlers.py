@@ -76,7 +76,7 @@ class PhotoHandler(Handler):
 
 
 class VoteHandler(Handler):
-    filter = Filters.chat(chat_id=config.MODERATION_CHAT_ID)
+    filter = Filters.chat(chat_id=config.get_moderation_chat())
 
     def handle(self, bot: Bot, update: Update, user_data, chat_data):
         data = json.loads(update.callback_query.data)

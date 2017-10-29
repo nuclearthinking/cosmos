@@ -29,7 +29,7 @@ def error(bot, update, error):
 def main():
     db.create_tables([User, Vote, File, Publication], safe=True)
 
-    updater = Updater(config.TOKEN)
+    updater = Updater(config.get_token())
     dp = updater.dispatcher
 
     [dp.add_handler(handler) for handler in handlers]
