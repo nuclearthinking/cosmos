@@ -14,7 +14,7 @@ from service import publication_service
 os.mkdir('logs') if not os.path.exists('logs') else None
 date = datetime.date.today()
 now_time = datetime.datetime.now()
-log_file_name = f'bot_{date}_{now_time.hour}-{now_time.minute}-{now_time.second}.log'
+log_file_name = f"bot_{date}_{now_time.hour}-{now_time.minute}-{now_time.second}.log"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename='/'.join(['logs', log_file_name]))
 # logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
