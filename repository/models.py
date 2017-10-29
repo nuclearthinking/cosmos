@@ -9,8 +9,9 @@ class BaseModel(Model):
 
 
 class User(BaseModel):
-    user_id = IntegerField()
-    username = CharField()
+    id = PrimaryKeyField()
+    user_id = IntegerField(unique=True)
+    username = CharField(unique=True)
     points = IntegerField(null=True)
 
 
@@ -26,11 +27,16 @@ class Vote(BaseModel):
     publication_id = IntegerField()
     user = ForeignKeyField(User)
     date = DateTimeField()
+    points = IntegerField(default=0)
 
 
 class Publication(BaseModel):
     id = PrimaryKeyField()
-    creation_date = DateTimeField()
-    publishing_date = DateTimeField()
-    votes = ForeignKeyField(Vote)
-    published = BooleanField()
+    user = ForeignKeyField(User, null=False)
+    item = ForeignKeyField(File, null=False)
+    creation_date = DateTimeField(null=False)
+    publishing_date = DateTimeField(null=True)
+    votes = ForeignKeyField(Vote, null=True)
+    score = FloatField(null=True)
+    published = BooleanField(null=True)
+    message_id = IntegerField(null=True)

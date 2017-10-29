@@ -1,5 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
 config.yml
 cosmos.db
-.idea
+.idea/
 images/
+logs/
+__pycache__/
+handlers/__pycache__/
+repository/__pycache__/
