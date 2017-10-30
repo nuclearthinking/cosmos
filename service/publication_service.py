@@ -22,7 +22,18 @@ def send_to_moderation(publication: Publication):
     bot = Bot(token=config.get_token())
     publication_id = publication.id
     file = open(file=publication.item.path, mode='rb')
+    markup = get_reply_markup(publication_id)
+    message = bot.send_photo(
+        chat_id=config.get_moderation_chat(),
+        photo=file,
+        reply_markup=markup
+    )
+    publication.message_id = message.message_id
+    publication.save()
+    on_moderation.append(publication)
 
+
+def get_reply_markup(publication_id):
     def get_star_button(starts):
         text = '⭐️' * starts
         callback = {
@@ -35,15 +46,7 @@ def send_to_moderation(publication: Publication):
         [get_star_button(5), get_star_button(4)],
         [get_star_button(3), get_star_button(2), get_star_button(1)]
     ]
-    markup = InlineKeyboardMarkup(buttons)
-    message = bot.send_photo(
-        chat_id=config.get_moderation_chat(),
-        photo=file,
-        reply_markup=markup
-    )
-    publication.message_id = message.message_id
-    publication.save()
-    on_moderation.append(publication)
+    return InlineKeyboardMarkup(buttons)
 
 
 def process_moderation(interval):
@@ -66,13 +69,13 @@ def process_moderation(interval):
                         message_id=publication.message_id,
                         reply_markup=None
                     )
-                    message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}\n'
+                    message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
                     if score > 3:
                         moderated.append(publication)
                     else:
                         publication.published = False
                         publication.update()
-                        message_text += 'Фотография не прошла модерацию'
+                        message_text += '\nФотография не прошла модерацию'
                     bot.edit_message_caption(
                         chat_id=config.get_moderation_chat(),
                         message_id=publication.message_id,
