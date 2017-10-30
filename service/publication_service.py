@@ -60,11 +60,24 @@ def process_moderation(interval):
                     score = round(score / len(votes), 2)
                     publication.score = score
                     publication.update()
+                    bot = Bot(config.get_token())
+                    bot.edit_message_reply_markup(
+                        chat_id=config.get_moderation_chat(),
+                        message_id=publication.message_id,
+                        reply_markup=None
+                    )
+                    message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}\n'
                     if score > 3:
                         moderated.append(publication)
                     else:
                         publication.published = False
                         publication.update()
+                        message_text += 'Фотография не прошла модерацию'
+                    bot.edit_message_caption(
+                        chat_id=config.get_moderation_chat(),
+                        message_id=publication.message_id,
+                        caption=message_text
+                    )
                 else:
                     on_moderation.append(publication)
             except Exception as e:
@@ -94,6 +107,11 @@ def process_publication():
                 file=publication.item.path,
                 mode='rb'
             )
+        )
+        bot.edit_message_caption(
+            chat_id=config.get_moderation_chat(),
+            message_id=publication.message_id,
+            caption='Фотография опубликована'
         )
         publication.published = True
         publication.publishing_date = datetime.datetime.now()
