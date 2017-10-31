@@ -29,17 +29,10 @@ def error(bot, update, error):
 def main():
     db.create_tables([User, Vote, File, Publication], safe=True)
 
-    migrator = SqliteMigrator(db)
-
-    migrate(
-        migrator.add_column('publication', 'moderated', BooleanField(null=True))
-    )
-
-    if Publication.select().where(Publication.id <= 47).exists():
-        for publication in Publication.select().where(Publication.id <= 47).first(999):
-            publication.published = True
-            publication.moderated = True
-            publication.save()
+    # migrator = SqliteMigrator(db)
+    # migrate(
+    #     migrator.add_column('publication', 'moderated', BooleanField(null=True))
+    # )
 
     updater = Updater(config.get_token())
     dp = updater.dispatcher

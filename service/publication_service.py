@@ -7,6 +7,7 @@ from typing import List
 
 import time
 from telegram.bot import Bot
+from telegram.error import BadRequest
 from telegram.inline.inlinekeyboardbutton import InlineKeyboardButton
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
@@ -64,11 +65,14 @@ def process_moderation(interval):
                     publication.score = score
                     publication.save()
                     bot = Bot(config.get_token())
-                    bot.edit_message_reply_markup(
-                        chat_id=config.get_moderation_chat(),
-                        message_id=publication.message_id,
-                        reply_markup=None
-                    )
+                    try:
+                        bot.edit_message_reply_markup(
+                            chat_id=config.get_moderation_chat(),
+                            message_id=publication.message_id,
+                            reply_markup=None
+                        )
+                    except BadRequest as e:
+                        logger.exception(f'Exception occurred while editing message with id {publication.message_id}')
                     message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
                     if score > 3:
                         publication.moderated = True
@@ -78,11 +82,15 @@ def process_moderation(interval):
                         publication.moderated = False
                         publication.save()
                         message_text += '\nФотография не прошла модерацию'
-                    bot.edit_message_caption(
-                        chat_id=config.get_moderation_chat(),
-                        message_id=publication.message_id,
-                        caption=message_text
-                    )
+                    try:
+                        bot.edit_message_caption(
+                            chat_id=config.get_moderation_chat(),
+                            message_id=publication.message_id,
+                            caption=message_text
+                        )
+                    except BadRequest as e:
+                        logger.exception(f'Error occurred while editing message with id {publication.message_id}')
+
                 else:
                     on_moderation.append(publication)
             except Exception as e:
