@@ -84,7 +84,7 @@ def process_moderation(interval):
                 else:
                     on_moderation.append(publication)
             except Exception as e:
-                logger.exception("Exception occured while processing on moderation queue")
+                logger.exception(f"Exception occured while processing publication {publication.id}")
         else:
             pass
         time.sleep(interval)
