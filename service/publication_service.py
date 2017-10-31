@@ -55,8 +55,8 @@ def process_moderation(interval):
             try:
                 publication = on_moderation.pop(0)
                 votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
-                if datetime.datetime.now() > (
-                            publication.creation_date + timedelta(hours=config.get_moderation_time_limit())) and len(votes) > 0:
+                logger.debug(f'Processing publication with id {publication.id} \n {publication}')
+                if datetime.datetime.now() > (publication.creation_date + timedelta(hours=config.get_moderation_time_limit())) and len(votes) > 0 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
