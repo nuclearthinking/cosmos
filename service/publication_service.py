@@ -62,7 +62,7 @@ def process_moderation(interval):
                         score = score + x
                     score = round(score / len(votes), 2)
                     publication.score = score
-                    publication.update()
+                    publication.save()
                     bot = Bot(config.get_token())
                     bot.edit_message_reply_markup(
                         chat_id=config.get_moderation_chat(),
@@ -71,10 +71,12 @@ def process_moderation(interval):
                     )
                     message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
                     if score > 3:
+                        publication.moderated = True
+                        publication.save()
                         moderated.append(publication)
                     else:
-                        publication.published = False
-                        publication.update()
+                        publication.moderated = False
+                        publication.save()
                         message_text += '\nФотография не прошла модерацию'
                     bot.edit_message_caption(
                         chat_id=config.get_moderation_chat(),
@@ -84,7 +86,7 @@ def process_moderation(interval):
                 else:
                     on_moderation.append(publication)
             except Exception as e:
-                logger.exception(f"Exception occured while processing publication {publication.id}")
+                logger.exception(f"Exception occured while processing publication {publication.id} \n {publication}")
         else:
             pass
         time.sleep(interval)
@@ -118,13 +120,16 @@ def process_publication():
         )
         publication.published = True
         publication.publishing_date = datetime.datetime.now()
-        publication.update()
+        publication.save()
 
 
 def start_publications():
-    if Publication.select().where(Publication.published == None).exists():
-        for publication in Publication.select().where(Publication.published == None).first(999):
+    if Publication.select().where(Publication.moderated == None).exists():
+        for publication in Publication.select().where(Publication.moderated == None).first(999):
             on_moderation.append(publication)
+    if Publication.select().where((Publication.moderated == True) & (Publication.published == False)):
+        for publication in Publication.select().where((Publication.moderated == True) & (Publication.published == False)).first(999):
+            moderated.append(publication)
     moderation_thread = threading.Thread(target=process_moderation, args=(15,))
     moderation_thread.setName("moderation")
     moderation_thread.daemon = True

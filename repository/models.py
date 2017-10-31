@@ -40,6 +40,7 @@ class Publication(BaseModel):
     score = FloatField(null=True)
     published = BooleanField(null=True)
     message_id = IntegerField(null=True)
+    moderated = BooleanField(null=True)
 
     def __repr__(self):
         return f'id = {self.id}, user = {self.user}, item = {self.item}, creation_date = {self.creation_date}, publishing_date = {self.publishing_date},\n' \

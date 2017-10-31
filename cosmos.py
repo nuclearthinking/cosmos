@@ -3,7 +3,7 @@ import logging
 import os
 
 from telegram.ext.updater import Updater
-
+from playhouse.migrate import *
 import config
 from handlers.handlers import StartHandler, PhotoHandler, VoteHandler
 from repository.models import User, db, File, Vote, Publication
@@ -28,6 +28,18 @@ def error(bot, update, error):
 
 def main():
     db.create_tables([User, Vote, File, Publication], safe=True)
+
+    migrator = SqliteMigrator(db)
+
+    migrate(
+        migrator.add_column('publication', 'moderated', BooleanField(null=True))
+    )
+
+    if Publication.select().where(Publication.id <= 47).exists():
+        for publication in Publication.select().where(Publication.id <= 47).first(999):
+            publication.published = True
+            publication.moderated = True
+            publication.save()
 
     updater = Updater(config.get_token())
     dp = updater.dispatcher
