@@ -3,12 +3,11 @@ import logging
 import os
 
 from telegram.ext.updater import Updater
-from playhouse.migrate import *
+
 import config
 from handlers.handlers import StartHandler, PhotoHandler, VoteHandler
 from repository.models import User, db, File, Vote, Publication
-
-from service import publication_service
+from service import publication_service, references
 
 # logging
 os.mkdir('logs') if not os.path.exists('logs') else None
@@ -29,14 +28,9 @@ def error(bot, update, error):
 def main():
     db.create_tables([User, Vote, File, Publication], safe=True)
 
-    # migrator = SqliteMigrator(db)
-    # migrate(
-    #     migrator.add_column('publication', 'moderated', BooleanField(null=True))
-    # )
-
     updater = Updater(config.get_token())
     dp = updater.dispatcher
-
+    references.set_bot_reference(updater.bot)
     [dp.add_handler(handler) for handler in handlers]
     dp.add_error_handler(error)
     updater.start_polling()

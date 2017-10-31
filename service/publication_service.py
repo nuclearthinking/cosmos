@@ -1,11 +1,12 @@
 import datetime
 import json
 import logging
+import random
 import threading
+import time
 from datetime import timedelta
 from typing import List
 
-import time
 from telegram.bot import Bot
 from telegram.error import BadRequest
 from telegram.inline.inlinekeyboardbutton import InlineKeyboardButton
@@ -13,6 +14,8 @@ from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
 import config
 from repository.models import Publication, Vote
+from service import references
+from utils.utils import _round_publication_date
 
 on_moderation: List[Publication] = []
 moderated: List[Publication] = []
@@ -57,7 +60,7 @@ def process_moderation(interval):
                 publication = on_moderation.pop(0)
                 votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
                 logger.debug(f'Processing publication with id {publication.id} \n {publication}')
-                if datetime.datetime.now() > (publication.creation_date + timedelta(hours=config.get_moderation_time_limit())) and len(votes) > 0 and publication.published is None:
+                if datetime.datetime.now() > (publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(votes) > 0 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
@@ -101,19 +104,18 @@ def process_moderation(interval):
 
 
 def publication_loop(interval):
-    now = datetime.datetime.now()
-    last_publication_time = now - timedelta(minutes=now.minute % 30, seconds=now.second)
+    last_publication_time = _round_publication_date(datetime.datetime.now())
     while 1:
         if datetime.datetime.now() > last_publication_time + timedelta(minutes=config.get_publication_interval()):
-            last_publication_time = datetime.datetime.now()
+            last_publication_time = _round_publication_date(datetime.datetime.now())
             process_publication()
         time.sleep(interval)
 
 
 def process_publication():
     if moderated:
-        bot = Bot(token=config.get_token())
-        publication = moderated.pop(0)
+        bot = references.get_bot_reference()
+        publication = moderated.pop(random.randrange(len(moderated)))
         bot.send_photo(
             chat_id=config.get_publication_channel(),
             photo=open(
