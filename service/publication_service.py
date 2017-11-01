@@ -64,7 +64,7 @@ def process_moderation(interval):
                     votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
                 else:
                     votes = []
-                logger.log(99, f'Processing publication with id {publication.id} \n {publication}')
+                logger.log(99, f'Processing publication with id {publication.id}')
                 if datetime.datetime.now() > (publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(votes) > 0 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
@@ -111,8 +111,10 @@ def process_moderation(interval):
 def publication_loop(interval):
     logger.log(99, 'Starting publication loop')
     last_publication_time = _round_publication_date(datetime.datetime.now())
+    logger.log(99, f'Next publication time {last_publication_time + timedelta(minutes=config.get_publication_interval())}')
     while 1:
-        if datetime.datetime.now() >= (last_publication_time + timedelta(minutes=config.get_publication_interval())):
+        future_publication_time = last_publication_time + timedelta(minutes=config.get_publication_interval())
+        if datetime.datetime.now() >= future_publication_time:
             last_publication_time = _round_publication_date(datetime.datetime.now())
             process_publication()
         time.sleep(interval)
@@ -162,12 +164,12 @@ def start_publications():
         logger.log(99, f'Fetched {len(moderated_publications)} items')
     else:
         logger.log(99, 'moderated publications doesnt exists')
-    moderation_thread = threading.Thread(target=process_moderation, args=(5,))
+    moderation_thread = threading.Thread(target=process_moderation, args=(60,))
     moderation_thread.setName("moderation")
     moderation_thread.daemon = True
     moderation_thread.start()
 
-    publication_thread = threading.Thread(target=publication_loop, args=(5,))
+    publication_thread = threading.Thread(target=publication_loop, args=(10,))
     publication_thread.setName("publication")
     publication_thread.daemon = True
     publication_thread.start()
