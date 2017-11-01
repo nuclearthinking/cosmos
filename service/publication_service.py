@@ -140,8 +140,8 @@ def start_publications():
     if Publication.select().where(Publication.moderated == None).exists():
         for publication in Publication.select().where(Publication.moderated == None).first(999):
             on_moderation.append(publication)
-    if Publication.select().where((Publication.moderated == True) & (Publication.published == False)):
-        for publication in Publication.select().where((Publication.moderated == True) & (Publication.published == False)).first(999):
+    if Publication.select().where((Publication.moderated == True) & (Publication.published == None)):
+        for publication in Publication.select().where((Publication.moderated == True) & (Publication.published == None)).first(999):
             moderated.append(publication)
     moderation_thread = threading.Thread(target=process_moderation, args=(15,))
     moderation_thread.setName("moderation")
