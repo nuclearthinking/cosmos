@@ -110,13 +110,13 @@ def process_moderation(interval):
 
 def publication_loop(interval):
     logger.log(99, 'Starting publication loop')
-    last_publication_time = _round_publication_date(datetime.datetime.now())
-    logger.log(99, f'Next publication time {last_publication_time + timedelta(minutes=config.get_publication_interval())}')
+    publication_time = _round_publication_date(datetime.datetime.now())
+    logger.log(99, f'Next publication time {publication_time}')
     while 1:
-        future_publication_time = last_publication_time + timedelta(minutes=config.get_publication_interval())
-        if datetime.datetime.now() >= future_publication_time:
-            last_publication_time = _round_publication_date(datetime.datetime.now())
+        if datetime.datetime.now() >= publication_time:
             process_publication()
+            publication_time = publication_time + timedelta(minutes=config.get_publication_interval())
+            logger.log(99, f'Next publication time {publication_time}')
         time.sleep(interval)
 
 
