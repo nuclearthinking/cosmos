@@ -1,12 +1,10 @@
-import datetime
 import logging
-import os
 
 from telegram.ext.updater import Updater
 
-import config
-from handlers.handlers import StartHandler, PhotoHandler, VoteHandler
-from repository.models import User, db, File, Vote, Publication
+from config import config as cfg
+from handlers.handlers import *
+from repository.models import *
 from service import publication_service, references
 
 # logging
@@ -15,7 +13,6 @@ date = datetime.date.today()
 now_time = datetime.datetime.now()
 log_file_name = f"bot_{date}_{now_time.hour}-{now_time.minute}-{now_time.second}.log"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename='/'.join(['logs', log_file_name]))
-# logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 handlers = [StartHandler().get_handler(), PhotoHandler().get_handler(), VoteHandler().get_handler()]
@@ -26,9 +23,9 @@ def error(bot, update, error):
 
 
 def main():
-    db.create_tables([User, Vote, File, Publication], safe=True)
+    db.create_tables([User, File, Publication, Vote, ParsingSource, ParsedItem], safe=True)
 
-    updater = Updater(config.get_token())
+    updater = Updater(cfg.token)
     dp = updater.dispatcher
     references.set_bot_reference(updater.bot)
     [dp.add_handler(handler) for handler in handlers]

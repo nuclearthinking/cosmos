@@ -7,12 +7,11 @@ import time
 from datetime import timedelta
 from typing import List
 
-from telegram.bot import Bot
 from telegram.error import BadRequest
 from telegram.inline.inlinekeyboardbutton import InlineKeyboardButton
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
-import config
+from config import config as cfg
 from repository.models import Publication, Vote
 from service import references
 from utils.utils import _round_publication_date
@@ -23,12 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 def send_to_moderation(publication: Publication):
-    bot = Bot(token=config.get_token())
+    bot = references.get_bot_reference()
     publication_id = publication.id
     file = open(file=publication.item.path, mode='rb')
     markup = get_reply_markup(publication_id)
     message = bot.send_photo(
-        chat_id=config.get_moderation_chat(),
+        chat_id=cfg.moderation_chat,
         photo=file,
         reply_markup=markup
     )
@@ -60,17 +59,17 @@ def process_moderation(interval):
                 publication = on_moderation.pop(0)
                 votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
                 logger.debug(f'Processing publication with id {publication.id} \n {publication}')
-                if datetime.datetime.now() > (publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(votes) > 0 and publication.published is None:
+                if datetime.datetime.now() > (publication.creation_date + timedelta(minutes=cfg.moderation_timeout)) and len(votes) > 0 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
                     score = round(score / len(votes), 2)
                     publication.score = score
                     publication.save()
-                    bot = Bot(config.get_token())
+                    bot = references.get_bot_reference()
                     try:
                         bot.edit_message_reply_markup(
-                            chat_id=config.get_moderation_chat(),
+                            chat_id=cfg.moderation_chat,
                             message_id=publication.message_id,
                             reply_markup=None
                         )
@@ -87,7 +86,7 @@ def process_moderation(interval):
                         message_text += '\nФотография не прошла модерацию'
                     try:
                         bot.edit_message_caption(
-                            chat_id=config.get_moderation_chat(),
+                            chat_id=cfg.moderation_chat,
                             message_id=publication.message_id,
                             caption=message_text
                         )
@@ -106,7 +105,7 @@ def process_moderation(interval):
 def publication_loop(interval):
     last_publication_time = _round_publication_date(datetime.datetime.now())
     while 1:
-        if datetime.datetime.now() > last_publication_time + timedelta(minutes=config.get_publication_interval()):
+        if datetime.datetime.now() > last_publication_time + timedelta(minutes=cfg.publication_interval):
             last_publication_time = _round_publication_date(datetime.datetime.now())
             process_publication()
         time.sleep(interval)
@@ -117,14 +116,14 @@ def process_publication():
         bot = references.get_bot_reference()
         publication = moderated.pop(random.randrange(len(moderated)))
         bot.send_photo(
-            chat_id=config.get_publication_channel(),
+            chat_id=cfg.publication_channel,
             photo=open(
                 file=publication.item.path,
                 mode='rb'
             )
         )
         bot.edit_message_caption(
-            chat_id=config.get_moderation_chat(),
+            chat_id=cfg.moderation_chat,
             message_id=publication.message_id,
             caption='Фотография опубликована'
         )

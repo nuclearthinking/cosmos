@@ -9,7 +9,7 @@ from telegram.ext.filters import Filters
 from telegram.ext.messagehandler import MessageHandler
 from telegram.update import Update
 
-import config
+from config import  config as cfg
 from repository import files
 from repository.models import File, User, Publication, Vote
 from service import publication_service
@@ -74,7 +74,7 @@ class PhotoHandler(Handler):
 
 
 class VoteHandler(Handler):
-    filter = Filters.chat(chat_id=config.get_moderation_chat())
+    filter = Filters.chat(chat_id=cfg.moderation_chat)
 
     def handle(self, bot: Bot, update: Update, user_data, chat_data):
         data = json.loads(update.callback_query.data)

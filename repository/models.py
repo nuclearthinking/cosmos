@@ -20,6 +20,10 @@ class File(BaseModel):
     path = CharField()
     telegram_id = CharField()
     hash_string = CharField()
+    vk_id = IntegerField(null=True)
+    vk_owner = IntegerField(null=True)
+    fingerprint = CharField(null=True)
+    source = IntegerField()
 
 
 class Vote(BaseModel):
@@ -28,6 +32,17 @@ class Vote(BaseModel):
     user = ForeignKeyField(User)
     date = DateTimeField()
     points = IntegerField(default=0)
+
+
+class ParsingSource(BaseModel):
+    id = PrimaryKeyField()
+    domain = CharField()
+    posts_count = IntegerField()
+
+
+class ParsedItem(BaseModel):
+    id = PrimaryKeyField()
+    source = ForeignKeyField(ParsingSource)
 
 
 class Publication(BaseModel):
