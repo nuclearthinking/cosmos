@@ -1,5 +1,5 @@
 # cosmos
-Telegram bot for photo content suggestion and then moderation.
+Telegram bot for photo content suggestion & moderation.
 
 1. Specify channel for publication & moderation group 
 2. Add bot there
