@@ -54,6 +54,7 @@ def get_reply_markup(publication_id):
 
 
 def process_moderation(interval):
+    time.sleep(10)
     while True:
         if on_moderation:
             try:
@@ -109,7 +110,7 @@ def process_moderation(interval):
 def publication_loop(interval):
     last_publication_time = _round_publication_date(datetime.datetime.now())
     while 1:
-        if datetime.datetime.now() > last_publication_time + timedelta(minutes=config.get_publication_interval()):
+        if datetime.datetime.now() >= (last_publication_time + timedelta(minutes=config.get_publication_interval())):
             last_publication_time = _round_publication_date(datetime.datetime.now())
             process_publication()
         time.sleep(interval)
@@ -143,12 +144,12 @@ def start_publications():
     if Publication.select().where((Publication.moderated == True) & (Publication.published == None)):
         for publication in Publication.select().where((Publication.moderated == True) & (Publication.published == None)).first(999):
             moderated.append(publication)
-    moderation_thread = threading.Thread(target=process_moderation, args=(15,))
+    moderation_thread = threading.Thread(target=process_moderation, args=(5,))
     moderation_thread.setName("moderation")
     moderation_thread.daemon = True
     moderation_thread.start()
 
-    publication_thread = threading.Thread(target=publication_loop, args=(15,))
+    publication_thread = threading.Thread(target=publication_loop, args=(5,))
     publication_thread.setName("publication")
     publication_thread.daemon = True
     publication_thread.start()
