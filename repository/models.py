@@ -20,6 +20,11 @@ class File(BaseModel):
     path = CharField()
     telegram_id = CharField()
     hash_string = CharField()
+    image_hash = CharField()
+    image_dhash = CharField()
+    image_ahash = CharField()
+    image_phash = CharField()
+    image_whash = CharField()
 
 
 class Vote(BaseModel):
