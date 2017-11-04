@@ -13,6 +13,7 @@ import config
 from repository import files
 from repository.models import File, User, Publication, Vote
 from service import publication_service
+from service import image_service
 
 WELCOME_MESSAGE = 'Добро пожаловать, отправь мне фотографию, я передам её нашим модераторам'
 IMAGE_RECEIVED = 'Спасибо! Фотография передана модераторам канала.'
@@ -55,18 +56,28 @@ class PhotoHandler(Handler):
         else:
             user = User.select().where(User.user_id == update.effective_user.id).peek(1)
         file_id = update.message.photo[-1].file_id
-        saved_file = files.save_file(file_id)
-        file_hash = files.get_md5_hash(saved_file.get('file_path'))
-        if not File.select().where(File.hash_string == file_hash).peek(1):
-            file = File.create(path=saved_file.get('file_path'), telegram_id=saved_file.get('image_identifier'),
-                               hash_string=file_hash)
-            file.save()
-            publication = Publication(user=user, item=file, creation_date=datetime.datetime.now())
-            publication.save()
-            bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_RECEIVED)
-            publication_service.send_to_moderation(publication)
+        tmp_file_path = files.save_as_tmp_file(file_id)
+        file_hash = files.get_md5_hash(tmp_file_path)
+        if not File.select().where(File.hash_string == file_hash).exists():
+            image_hashes = image_service.get_image_hashes(tmp_file_path)
+            if not File.select().where((File.image_whash == image_hashes.get('wHash')) |
+                                               (File.image_phash == image_hashes.get('pHash')) |
+                                               (File.image_dhash == image_hashes.get('dHash')) |
+                                               (File.image_ahash == image_hashes.get('aHash'))).exists():
+                file_path = files.move_file(tmp_file_path)
+                file = File.create(path=file_path, telegram_id=file_id, hash_string=file_hash,
+                                   image_dhash=image_hashes.get('dHash'), image_ahash=image_hashes.get('aHash'),
+                                   image_phash=image_hashes.get('pHash'), image_whash=image_hashes.get('wHash'))
+                file.save()
+                publication = Publication(user=user, item=file, creation_date=datetime.datetime.now())
+                publication.save()
+                bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_RECEIVED)
+                publication_service.send_to_moderation(publication)
+            else:
+                os.remove(tmp_file_path)
+                bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_ALREADY_EXISTS)
         else:
-            os.remove(saved_file.get('file_path'))
+            os.remove(tmp_file_path)
             bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_ALREADY_EXISTS)
 
     def get_handler(self):
