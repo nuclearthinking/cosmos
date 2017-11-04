@@ -20,14 +20,11 @@ class File(BaseModel):
     path = CharField()
     telegram_id = CharField()
     hash_string = CharField()
-    vk_id = IntegerField(null=True)
-    vk_owner = IntegerField(null=True)
-    fingerprint = CharField(null=True)
-    source = IntegerField()
     image_dhash = CharField()
     image_ahash = CharField()
     image_phash = CharField()
     image_whash = CharField()
+    source = CharField()
 
 
 class Vote(BaseModel):
@@ -42,11 +39,14 @@ class ParsingSource(BaseModel):
     id = PrimaryKeyField()
     domain = CharField()
     posts_count = IntegerField()
+    parsed_posts = IntegerField(default=0)
 
 
-class ParsedItem(BaseModel):
+class VkPhoto(BaseModel):
     id = PrimaryKeyField()
-    source = ForeignKeyField(ParsingSource)
+    photo_id = IntegerField(unique=True)
+    owner_id = IntegerField()
+    processed = BooleanField(default=False)
 
 
 class Publication(BaseModel):

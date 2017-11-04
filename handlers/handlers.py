@@ -9,7 +9,7 @@ from telegram.ext.filters import Filters
 from telegram.ext.messagehandler import MessageHandler
 from telegram.update import Update
 
-from config import  config as cfg
+from config import config as cfg
 from repository import files
 from repository.models import File, User, Publication, Vote
 from service import publication_service

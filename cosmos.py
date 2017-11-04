@@ -4,6 +4,7 @@ from telegram.ext.updater import Updater
 
 from config import config as cfg
 from handlers.handlers import *
+from parsers import vk_parser
 from repository.models import *
 from service import publication_service, references
 
@@ -26,8 +27,8 @@ def error(bot, update, error):
 
 
 def main():
-    db.create_tables([User, File, Publication, Vote, ParsingSource, ParsedItem], safe=True)
-
+    db.create_tables([User, File, Publication, Vote, ParsingSource, VkPhoto], safe=True)
+    load_parsing_sources()
     updater = Updater(cfg.token)
     dp = updater.dispatcher
     references.set_bot_reference(updater.bot)
@@ -36,6 +37,14 @@ def main():
     updater.start_polling()
     publication_service.start_publications()
     updater.idle()
+
+
+def load_parsing_sources():
+    groups = cfg.vk_groups
+    for group in groups:
+        if not ParsingSource.select().where(ParsingSource.domain == group).exists():
+            posts_count = vk_parser.get_posts_count(group)
+            ParsingSource.create(domain=group, posts_count=posts_count).save()
 
 
 if __name__ == '__main__':
