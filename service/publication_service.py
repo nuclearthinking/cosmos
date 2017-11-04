@@ -65,7 +65,9 @@ def process_moderation(interval):
                 else:
                     votes = []
                 logger.log(99, f'Processing publication with id {publication.id}')
-                if datetime.datetime.now() > (publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(votes) > 0 and publication.published is None:
+                if datetime.datetime.now() > (
+                    publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(
+                        votes) > 0 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
@@ -158,7 +160,8 @@ def start_publications():
         logger.log(99, 'on_moderation publications doesnt exists')
     if Publication.select().where((Publication.moderated == True) & (Publication.published == None)):
         logger.log(99, 'Fetching moderated publications from database')
-        moderated_publications = Publication.select().where((Publication.moderated == True) & (Publication.published == None)).first(999)
+        moderated_publications = Publication.select().where(
+            (Publication.moderated == True) & (Publication.published == None)).first(999)
         for publication in moderated_publications:
             moderated.append(publication)
         logger.log(99, f'Fetched {len(moderated_publications)} items')

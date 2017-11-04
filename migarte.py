@@ -6,7 +6,6 @@ from service import image_service
 migrator = SqliteMigrator(db)
 
 operations = [
-    migrator.add_column('file', 'image_hash', CharField(null=True)),
     migrator.add_column('file', 'image_dhash', CharField(null=True)),
     migrator.add_column('file', 'image_ahash', CharField(null=True)),
     migrator.add_column('file', 'image_phash', CharField(null=True)),
@@ -22,19 +21,16 @@ for item in operations:
 
 
 def hash_all_files():
-    for file in File.select():
+    for file in File.select().where((File.image_ahash == None) | (File.image_dhash == None) |
+                                            (File.image_phash == None) | (File.image_whash == None)):
         hashes = image_service.get_image_hashes(file.path)
-        file.image_dhash = hashes.get('dhash')
-        file.image_ahash = hashes.get('ahash')
-        file.image_phash = hashes.get('phash')
-        file.image_whash = hashes.get('whash')
+        file.image_dhash = hashes.get('dHash')
+        file.image_ahash = hashes.get('aHash')
+        file.image_phash = hashes.get('pHash')
+        file.image_whash = hashes.get('wHash')
         file.save()
 
 
-def find_all_similar():
-    for file in File.select():
-        image_service.find_similar_images(file)
-
-
-hash_all_files()  # hash all unhashed files
-find_all_similar()
+if File.select().where((File.image_ahash == None) | (File.image_dhash == None) |
+                               (File.image_phash == None) | (File.image_whash == None)).exists():
+    hash_all_files()
