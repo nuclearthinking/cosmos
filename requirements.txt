@@ -1,5 +1,5 @@
 python-telegram-bot==8.1.1
 ruamel.yaml==0.15.34
 peewee==2.10.2
-requests
-Pillow
+Pillow==4.3.0
+ImageHash == 3.7

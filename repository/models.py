@@ -24,6 +24,10 @@ class File(BaseModel):
     vk_owner = IntegerField(null=True)
     fingerprint = CharField(null=True)
     source = IntegerField()
+    image_dhash = CharField()
+    image_ahash = CharField()
+    image_phash = CharField()
+    image_whash = CharField()
 
 
 class Vote(BaseModel):
@@ -56,7 +60,3 @@ class Publication(BaseModel):
     published = BooleanField(null=True)
     message_id = IntegerField(null=True)
     moderated = BooleanField(null=True)
-
-    def __repr__(self):
-        return f'id = {self.id}, user = {self.user}, item = {self.item}, creation_date = {self.creation_date}, publishing_date = {self.publishing_date},\n' \
-               f'votes = {self.votes}, score = {self.score}, published = {self.published}, message_id = {self.message_id}'

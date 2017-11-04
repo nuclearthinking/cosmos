@@ -53,13 +53,20 @@ def get_reply_markup(publication_id):
 
 
 def process_moderation(interval):
+    logger.log(99, 'Starting moderation loop')
+    time.sleep(10)
     while True:
         if on_moderation:
             try:
                 publication = on_moderation.pop(0)
-                votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
-                logger.debug(f'Processing publication with id {publication.id} \n {publication}')
-                if datetime.datetime.now() > (publication.creation_date + timedelta(minutes=cfg.moderation_timeout)) and len(votes) > 0 and publication.published is None:
+                if Vote.select().where(Vote.publication_id == publication.id).exists():
+                    votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
+                else:
+                    votes = []
+                logger.log(99, f'Processing publication with id {publication.id}')
+                if datetime.datetime.now() > (
+                    publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(
+                        votes) > 0 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
@@ -74,7 +81,7 @@ def process_moderation(interval):
                             reply_markup=None
                         )
                     except BadRequest as e:
-                        logger.exception(f'Exception occurred while editing message with id {publication.message_id}')
+                        logger.log(99, f'Exception occurred while editing message with id {publication.message_id}')
                     message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
                     if score > 3:
                         publication.moderated = True
@@ -91,60 +98,80 @@ def process_moderation(interval):
                             caption=message_text
                         )
                     except BadRequest as e:
-                        logger.exception(f'Error occurred while editing message with id {publication.message_id}')
+                        logger.log(99, f'Error occurred while editing message with id {publication.message_id}')
 
                 else:
                     on_moderation.append(publication)
             except Exception as e:
-                logger.exception(f"Exception occured while processing publication {publication.id} \n {publication}")
+                logger.log(99, f"Exception occured while processing publication {publication.id} \n {publication}")
         else:
             pass
         time.sleep(interval)
 
 
 def publication_loop(interval):
-    last_publication_time = _round_publication_date(datetime.datetime.now())
+    logger.log(99, 'Starting publication loop')
+    publication_time = _round_publication_date(datetime.datetime.now())
+    logger.log(99, f'Next publication time {publication_time}')
     while 1:
-        if datetime.datetime.now() > last_publication_time + timedelta(minutes=cfg.publication_interval):
-            last_publication_time = _round_publication_date(datetime.datetime.now())
+        if datetime.datetime.now() >= publication_time:
             process_publication()
+            publication_time = publication_time + timedelta(minutes=config.get_publication_interval())
+            logger.log(99, f'Next publication time {publication_time}')
         time.sleep(interval)
 
 
 def process_publication():
+    logger.log(99, 'Starting process publication')
     if moderated:
         bot = references.get_bot_reference()
         publication = moderated.pop(random.randrange(len(moderated)))
-        bot.send_photo(
-            chat_id=cfg.publication_channel,
-            photo=open(
-                file=publication.item.path,
-                mode='rb'
+        logger.log(99, f'publishing {publication}')
+        try:
+            bot.send_photo(
+                chat_id=cfg.publication_channel,
+                photo=open(
+                    file=publication.item.path,
+                    mode='rb'
+                )
             )
-        )
-        bot.edit_message_caption(
-            chat_id=cfg.moderation_chat,
-            message_id=publication.message_id,
-            caption='Фотография опубликована'
-        )
-        publication.published = True
-        publication.publishing_date = datetime.datetime.now()
-        publication.save()
+            bot.edit_message_caption(
+                chat_id=cfg.moderation_chat,
+                message_id=publication.message_id,
+                caption='Фотография опубликована'
+            )
+            publication.published = True
+            publication.publishing_date = datetime.datetime.now()
+            publication.save()
+            logger.log(99, f'publishing {publication.id} successfully done')
+        except Exception as e:
+            logger.log(99, f'Exception occured while publishing {publication}, {e}')
 
 
 def start_publications():
     if Publication.select().where(Publication.moderated == None).exists():
-        for publication in Publication.select().where(Publication.moderated == None).first(999):
+        logger.log(99, 'Fetching on_moderation publications from database')
+        on_moderation_publications = Publication.select().where(Publication.moderated == None).first(999)
+        for publication in on_moderation_publications:
             on_moderation.append(publication)
-    if Publication.select().where((Publication.moderated == True) & (Publication.published == False)):
-        for publication in Publication.select().where((Publication.moderated == True) & (Publication.published == False)).first(999):
+        logger.log(99, f'Fetched {len(on_moderation_publications)} items')
+    else:
+        logger.log(99, 'on_moderation publications doesnt exists')
+    if Publication.select().where((Publication.moderated == True) & (Publication.published == None)):
+        logger.log(99, 'Fetching moderated publications from database')
+        moderated_publications = Publication.select().where(
+            (Publication.moderated == True) & (Publication.published == None)).first(999)
+        for publication in moderated_publications:
             moderated.append(publication)
-    moderation_thread = threading.Thread(target=process_moderation, args=(15,))
+        logger.log(99, f'Fetched {len(moderated_publications)} items')
+    else:
+        logger.log(99, 'moderated publications doesnt exists')
+    moderation_thread = threading.Thread(target=process_moderation, args=(60,))
     moderation_thread.setName("moderation")
     moderation_thread.daemon = True
     moderation_thread.start()
 
-    publication_thread = threading.Thread(target=publication_loop, args=(15,))
+    publication_thread = threading.Thread(target=publication_loop, args=(10,))
     publication_thread.setName("publication")
     publication_thread.daemon = True
     publication_thread.start()
