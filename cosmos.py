@@ -6,7 +6,7 @@ from config import config as cfg
 from handlers.handlers import *
 from parsers import vk_parser
 from repository.models import *
-from service import publication_service, references
+from service import publication_service, references, moderation
 
 # logging
 os.mkdir('logs') if not os.path.exists('logs') else None
@@ -19,7 +19,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 logger.isEnabledFor(99)
 
-handlers = [StartHandler().get_handler(), PhotoHandler().get_handler(), VoteHandler().get_handler()]
+handlers = [StartHandler().get_handler(),
+            PhotoHandler().get_handler(),
+            VoteHandler().get_handler(),
+            StartParsingHandler().get_handler()]
 
 
 def error(bot, update, error):
@@ -36,6 +39,7 @@ def main():
     dp.add_error_handler(error)
     updater.start_polling()
     publication_service.start_publications()
+    moderation.start()
     updater.idle()
 
 
@@ -43,8 +47,7 @@ def load_parsing_sources():
     groups = cfg.vk_groups
     for group in groups:
         if not ParsingSource.select().where(ParsingSource.domain == group).exists():
-            posts_count = vk_parser.get_posts_count(group)
-            ParsingSource.create(domain=group, posts_count=posts_count).save()
+            ParsingSource.create(domain=group).save()
 
 
 if __name__ == '__main__':

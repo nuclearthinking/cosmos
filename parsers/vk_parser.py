@@ -2,6 +2,7 @@
 https://api.vk.com/api.php?oauth=1&method=wall.get&v=5.69&filter=all&domain=awe.some&count=5&access_token=6c5f17a96c5f17a96c5f17a9ea6c07cb1066c5f6c5f17a935a7db63319cf8820c2e73b2
 """
 import json
+import random
 from typing import List
 
 import logging
@@ -12,7 +13,7 @@ from config import config as cfg
 from requests import get
 
 from parsers.vk_entity import Response, Photo, GetPhotosById
-from repository.models import VkPhoto, ParsingSource
+from repository.models import VkPhoto, ParsingSource, db, db_lock
 
 VK_API_URL = "https://api.vk.com/api.php"
 
@@ -45,7 +46,7 @@ def photos_get_params(photos: List[VkPhoto]):
     }
 
 
-def get_photo_by_id(photos: List[VkPhoto]):
+def get_photos_by_id(photos: List[VkPhoto]):
     params = photos_get_params(photos)
     r = get(url=VK_API_URL, params=params)
     r_dict = json.loads(r.content.decode())
@@ -70,6 +71,9 @@ def parse_group(group: ParsingSource):
     logger.log(99, f'Starting parsing group {group.domain}')
     posts_count = get_posts_count(group.domain)
     if group.parsed_posts < posts_count:
+        insert_array = []
+        with db_lock:
+            existing_photos = [photo.photo_id for photo in VkPhoto.select()]
         start_post = group.parsed_posts
         end_post = group.parsed_posts
         while end_post < posts_count:
@@ -81,23 +85,26 @@ def parse_group(group: ParsingSource):
                         for attachment in item.attachments:
                             if attachment.type == 'photo':
                                 photo = attachment.photo
-                                if not VkPhoto.select().where(VkPhoto.photo_id == photo.id).exists():
-                                    VkPhoto.create(photo_id=photo.id, owner_id=photo.owner_id).save()
+                                if photo.id not in existing_photos:
+                                    insert_array.append({'photo_id': photo.id, 'owner_id': photo.owner_id,
+                                                         'rnd': random.randint(1, 100000)})
+                                    existing_photos.append(photo.id)
                                 else:
                                     logger.log(99, f'Photo with id {photo.id} already exists')
-                logger.log(99, f'Successfully fetched {len(items)}')
-                group.parsed_posts = start_post + len(items)
-                group.save()
+                if insert_array:
+                    with db_lock:
+                        VkPhoto.insert_many(insert_array).execute()
+                insert_array.clear()
+                with db_lock:
+                    group.parsed_posts = start_post + len(items)
+                    group.save()
                 start_post += len(items)
                 end_post += len(items)
+                logger.log(99, f'Successfully fetched {len(items)}')
             else:
                 logger.log(99, f'No new items ')
                 break
-            time.sleep(10)
+            time.sleep(3)
         logger.log(99, f'Parsing source {group.domain} successfully completed')
     else:
         logger.log(99, f'Nothing new to parse from {group.domain}')
-
-
-source = ParsingSource.select().where(ParsingSource.domain == "om_fge").peek()
-parse_group(source)

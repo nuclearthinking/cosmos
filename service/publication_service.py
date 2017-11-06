@@ -64,9 +64,8 @@ def process_moderation(interval):
                 else:
                     votes = []
                 logger.log(99, f'Processing publication with id {publication.id}')
-                if datetime.datetime.now() > (
-                    publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(
-                        votes) > 0 and publication.published is None:
+                moderation_end_time = publication.creation_date + timedelta(minutes=cfg.moderation_timeout)
+                if datetime.datetime.now() > moderation_end_time and len(votes) > 1 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
@@ -103,7 +102,7 @@ def process_moderation(interval):
                 else:
                     on_moderation.append(publication)
             except Exception as e:
-                logger.log(99, f"Exception occured while processing publication {publication.id} \n {publication}")
+                logger.log(99, f"Exception occurred while processing publication with id {publication.id}")
         else:
             pass
         time.sleep(interval)
@@ -116,7 +115,7 @@ def publication_loop(interval):
     while 1:
         if datetime.datetime.now() >= publication_time:
             process_publication()
-            publication_time = publication_time + timedelta(minutes=config.get_publication_interval())
+            publication_time = publication_time + timedelta(minutes=cfg.publication_interval)
             logger.log(99, f'Next publication time {publication_time}')
         time.sleep(interval)
 
@@ -126,7 +125,7 @@ def process_publication():
     if moderated:
         bot = references.get_bot_reference()
         publication = moderated.pop(random.randrange(len(moderated)))
-        logger.log(99, f'publishing {publication}')
+        logger.log(99, f'Publishing publication with id {publication.id}')
         try:
             bot.send_photo(
                 chat_id=cfg.publication_channel,
@@ -135,17 +134,20 @@ def process_publication():
                     mode='rb'
                 )
             )
-            bot.edit_message_caption(
-                chat_id=cfg.moderation_chat,
-                message_id=publication.message_id,
-                caption='Фотография опубликована'
-            )
+            try:
+                bot.edit_message_caption(
+                    chat_id=cfg.moderation_chat,
+                    message_id=publication.message_id,
+                    caption='Фотография опубликована'
+                )
+            except BadRequest as e:
+                logger.log(99, f'Message already changed')
             publication.published = True
             publication.publishing_date = datetime.datetime.now()
             publication.save()
-            logger.log(99, f'publishing {publication.id} successfully done')
+            logger.log(99, f'Publishing  publication with id {publication.id} successfully done')
         except Exception as e:
-            logger.log(99, f'Exception occured while publishing {publication}, {e}')
+            logger.log(99, f'Exception occurred while publishing publication with id {publication.id}', e)
 
 
 def start_publications():

@@ -1,13 +1,16 @@
 import hashlib
 import os
+import shutil
 import uuid
 
+import requests
+
 from config import config as cfg
+from repository.models import File
 from service import references
 
 
-
-def save_as_tmp_file(file_id):
+def save_by_telegram(file_id):
     bot = references.get_bot_reference()
     tmp_dir = 'temp'
     if not os.path.exists(tmp_dir):
@@ -19,6 +22,24 @@ def save_as_tmp_file(file_id):
             tmp_file = open(file=tmp_file_path, mode='wb')
             bot.get_file(file_id=file_id).download(out=tmp_file)
             tmp_file.close()
+            return tmp_file_path
+        else:
+            continue
+
+
+def save_by_url(url):
+    tmp_dir = 'temp'
+    if not os.path.exists(tmp_dir):
+        os.mkdir(tmp_dir)
+    while 1:
+        tmp_file_name = f'{uuid.uuid4()}.jpg'
+        tmp_file_path = os.path.normpath(os.path.join(tmp_dir, tmp_file_name))
+        if not os.path.exists(tmp_file_path):
+            response = requests.get(url=url, stream=True)
+            tmp_file = open(file=tmp_file_path, mode='wb')
+            shutil.copyfileobj(response.raw, tmp_file)
+            tmp_file.close()
+            del response
             return tmp_file_path
         else:
             continue
