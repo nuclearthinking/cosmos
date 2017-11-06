@@ -1,4 +1,5 @@
 import logging
+from logging import DEBUG
 
 from telegram.ext.updater import Updater
 
@@ -14,7 +15,7 @@ date = datetime.date.today()
 now_time = datetime.datetime.now()
 log_file_name = f"bot_{date}_{now_time.hour}-{now_time.minute}-{now_time.second}.log"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    filename='/'.join(['logs', log_file_name]), level=99)
+                    filename='/'.join(['logs', log_file_name]), level=DEBUG)
 # logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 logger.isEnabledFor(99)
