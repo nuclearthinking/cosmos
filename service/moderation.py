@@ -37,24 +37,18 @@ def moderate_queue():
                     os.remove(tmp_file_path)
                     continue
                 file_path = move_file(tmp_file_path)
-                with db_lock:
-                    file = File(path=file_path, telegram_id='from_vk', hash_string=md5_hash,
-                                image_dhash=hashes.get('dHash'), image_ahash=hashes.get('aHash'),
-                                image_phash=hashes.get('pHash'), image_whash=hashes.get('wHash'), source='vk')
-                    file.save()
-                if not Users.select().where(Users.username == 'system').exists():
-                    with db_lock:
-                        Users.create(username='system', user_id=1)
-                with db_lock:
-                    user = Users.select().where(Users.username == 'system').first(1)
-                    publication = Publication.create(user=user, item=file, creation_date=datetime.datetime.now())
+                file = File(path=file_path, telegram_id='from_vk', hash_string=md5_hash,
+                            image_dhash=hashes.get('dHash'), image_ahash=hashes.get('aHash'),
+                            image_phash=hashes.get('pHash'), image_whash=hashes.get('wHash'), source='vk')
+                file.save()
+                user = Users.select().where(Users.username == 'nuclearthinking').first(1)
+                publication = Publication.create(user=user, item=file, creation_date=datetime.datetime.now())
                 publication_service.send_to_moderation(publication)
             else:
                 continue
-        with db_lock:
-            for vk_photo in photos:
-                vk_photo.processed = True
-                vk_photo.save()
+        for vk_photo in photos:
+            vk_photo.processed = True
+            vk_photo.save()
         logger.log(99, 'Moderation iteration completed')
     else:
         logger.log(99, 'Nothing to moderate for VkPhoto moderation')
