@@ -12,7 +12,7 @@ from telegram.update import Update
 
 from config import config as cfg
 from repository import files
-from repository.models import File, User, Publication, Vote
+from repository.models import File, Users, Publication, Vote
 from service import publication_service, parsing
 from service import image_service
 
@@ -53,12 +53,12 @@ class PhotoHandler(Handler):
     def handle(self, bot: Bot, update: Update):
         try:
             user = ...
-            if not User.select().where(User.user_id == update.effective_user.id).exists():
-                user = User.create(user_id=update.effective_user.id,
-                                   username=update.effective_user.username or update.effective_user.first_name,
-                                   points=0)
+            if not Users.select().where(Users.user_id == update.effective_user.id).exists():
+                user = Users.create(user_id=update.effective_user.id,
+                                    username=update.effective_user.username or update.effective_user.first_name,
+                                    points=0)
             else:
-                user = User.select().where(User.user_id == update.effective_user.id).peek(1)
+                user = Users.select().where(Users.user_id == update.effective_user.id).peek(1)
             file_id = update.message.photo[-1].file_id
             tmp_file_path = files.save_by_telegram(file_id)
             file_hash = files.get_md5_hash(tmp_file_path)
@@ -101,11 +101,11 @@ class VoteHandler(Handler):
     def handle(self, bot: Bot, update: Update, user_data, chat_data):
         data = json.loads(update.callback_query.data)
         user = ...
-        if User.select().where(User.user_id == update.callback_query.from_user.id).exists():
-            user = User.select().where(User.user_id == update.callback_query.from_user.id).peek(1)
+        if Users.select().where(Users.user_id == update.callback_query.from_user.id).exists():
+            user = Users.select().where(Users.user_id == update.callback_query.from_user.id).peek(1)
         else:
-            user = User(user_id=update.callback_query.from_user.id,
-                        username=update.callback_query.from_user.username or update.callback_query.from_user.first_name)
+            user = Users(user_id=update.callback_query.from_user.id,
+                         username=update.callback_query.from_user.username or update.callback_query.from_user.first_name)
             user.save()
         if Vote.select().where(Vote.user == user, Vote.publication_id == data.get('publication_id'),
                                Vote.points > 0).exists():

@@ -42,11 +42,11 @@ def moderate_queue():
                                 image_dhash=hashes.get('dHash'), image_ahash=hashes.get('aHash'),
                                 image_phash=hashes.get('pHash'), image_whash=hashes.get('wHash'), source='vk')
                     file.save()
-                if not User.select().where(User.username == 'system').exists():
+                if not Users.select().where(Users.username == 'system').exists():
                     with db_lock:
-                        User.create(username='system', user_id=1)
+                        Users.create(username='system', user_id=1)
                 with db_lock:
-                    user = User.select().where(User.username == 'system').first(1)
+                    user = Users.select().where(Users.username == 'system').first(1)
                     publication = Publication.create(user=user, item=file, creation_date=datetime.datetime.now())
                 publication_service.send_to_moderation(publication)
             else:

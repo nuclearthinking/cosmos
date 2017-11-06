@@ -6,7 +6,7 @@ from repository.models import *
 
 logger = logging.getLogger(__name__)
 
-db.create_tables([File, User, Publication, Vote],safe=True)
+db.create_tables([File, Users, Publication, Vote], safe=True)
 logger.debug('Starting fetching files data')
 files = []
 for file in sql.File.select():
@@ -37,7 +37,7 @@ for user in sql.User.select():
          'points': user.points}
     )
 try:
-    User.insert_many(users).execute()
+    Users.insert_many(users).execute()
 except Exception:
     pass
 

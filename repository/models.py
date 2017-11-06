@@ -16,7 +16,7 @@ class BaseModel(Model):
         database = db
 
 
-class User(BaseModel):
+class Users(BaseModel):
     id = PrimaryKeyField()
     user_id = IntegerField(unique=True)
     username = CharField(unique=True)
@@ -53,7 +53,7 @@ class File(BaseModel):
 class Vote(BaseModel):
     id = PrimaryKeyField()
     publication_id = IntegerField()
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(Users)
     date = DateTimeField()
     points = IntegerField(default=0)
 
@@ -74,7 +74,7 @@ class VkPhoto(BaseModel):
 
 class Publication(BaseModel):
     id = PrimaryKeyField()
-    user = ForeignKeyField(User, null=False)
+    user = ForeignKeyField(Users, null=False)
     item = ForeignKeyField(File, null=False)
     creation_date = DateTimeField(null=False)
     publishing_date = DateTimeField(null=True)
