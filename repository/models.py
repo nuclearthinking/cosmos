@@ -16,12 +16,6 @@ class BaseModel(Model):
         database = db
 
 
-class User(BaseModel):
-    id = PrimaryKeyField()
-    user_id = IntegerField(unique=True)
-    username = CharField(unique=True)
-    points = IntegerField(null=True)
-
 class Contributor(BaseModel):
     id = PrimaryKeyField()
     user_id = IntegerField(unique=True)
@@ -50,7 +44,6 @@ class File(BaseModel):
 class Vote(BaseModel):
     id = PrimaryKeyField()
     publication_id = IntegerField()
-    user = ForeignKeyField(User)
     date = DateTimeField()
     points = IntegerField(default=0)
     moderator = ForeignKeyField(Moderator, to_field=Moderator.id)
@@ -72,7 +65,6 @@ class VkPhoto(BaseModel):
 
 class Publication(BaseModel):
     id = PrimaryKeyField()
-    user = ForeignKeyField(User, null=False)
     item = ForeignKeyField(File, null=False)
     creation_date = DateTimeField(null=False)
     publishing_date = DateTimeField(null=True)
