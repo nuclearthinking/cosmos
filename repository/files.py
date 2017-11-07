@@ -20,7 +20,7 @@ def save_by_telegram(file_id):
         tmp_file_path = os.path.normpath(os.path.join(tmp_dir, tmp_file_name))
         if not os.path.exists(tmp_file_path):
             tmp_file = open(file=tmp_file_path, mode='wb')
-            bot.get_file(file_id=file_id).download(out=tmp_file)
+            bot.get_file(file_id=file_id).download(out=tmp_file,timeout=20)
             tmp_file.close()
             return tmp_file_path
         else:

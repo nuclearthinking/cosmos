@@ -72,8 +72,6 @@ def parse_group(group: ParsingSource):
     posts_count = get_posts_count(group.domain)
     if group.parsed_posts < posts_count:
         insert_array = []
-        with db_lock:
-            existing_photos = [photo.photo_id for photo in VkPhoto.select()]
         start_post = group.parsed_posts
         end_post = group.parsed_posts
         while end_post < posts_count:
@@ -85,12 +83,8 @@ def parse_group(group: ParsingSource):
                         for attachment in item.attachments:
                             if attachment.type == 'photo':
                                 photo = attachment.photo
-                                if photo.id not in existing_photos:
-                                    insert_array.append({'photo_id': photo.id, 'owner_id': photo.owner_id,
-                                                         'rnd': random.randint(1, 100000)})
-                                    existing_photos.append(photo.id)
-                                else:
-                                    logger.log(99, f'Photo with id {photo.id} already exists')
+                                insert_array.append({'photo_id': photo.id, 'owner_id': photo.owner_id,
+                                                     'rnd': random.randint(1, 100000)})
                 if insert_array:
                     with db_lock:
                         VkPhoto.insert_many(insert_array).execute()
