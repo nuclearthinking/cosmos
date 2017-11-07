@@ -16,6 +16,12 @@ class BaseModel(Model):
         database = db
 
 
+class User(BaseModel):
+    id = PrimaryKeyField()
+    user_id = IntegerField(unique=True)
+    username = CharField(unique=True)
+    points = IntegerField(null=True)
+
 class Contributor(BaseModel):
     id = PrimaryKeyField()
     user_id = IntegerField(unique=True)
@@ -39,27 +45,12 @@ class File(BaseModel):
     image_ahash = CharField()
     image_phash = CharField()
     image_whash = CharField()
-    source = CharField()
-
-    @staticmethod
-    def check_hashes(hashes: dict):
-        query = File.select().where((File.image_ahash == hashes.get('aHash')) |
-                                    (File.image_dhash == hashes.get('dHash')) |
-                                    (File.image_phash == hashes.get('pHash')) |
-                                    (File.image_whash == hashes.get('wHash')))
-        with db_lock:
-            return query.exists()
-
-    @staticmethod
-    def exists_by_md5_hash(md5_hash):
-        query = File.select().where(File.hash_string == md5_hash)
-        with db_lock:
-            return query.exists()
 
 
 class Vote(BaseModel):
     id = PrimaryKeyField()
     publication_id = IntegerField()
+    user = ForeignKeyField(User)
     date = DateTimeField()
     points = IntegerField(default=0)
     moderator = ForeignKeyField(Moderator, to_field=Moderator.id)
@@ -81,6 +72,7 @@ class VkPhoto(BaseModel):
 
 class Publication(BaseModel):
     id = PrimaryKeyField()
+    user = ForeignKeyField(User, null=False)
     item = ForeignKeyField(File, null=False)
     creation_date = DateTimeField(null=False)
     publishing_date = DateTimeField(null=True)
