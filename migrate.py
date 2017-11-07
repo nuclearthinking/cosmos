@@ -51,6 +51,7 @@ for vote in Vote.select():
 
 second_operations = [
     migrator.drop_column('publication', 'user_id', cascade=False),
-    migrator.drop_column('vote', 'user_id', cascade=False)
+    migrator.drop_column('vote', 'user_id', cascade=False),
+    migrator.rename_table('users', 'deprecated_users')
 ]
 preform_migration(second_operations)
