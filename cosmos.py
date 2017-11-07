@@ -31,7 +31,7 @@ def error(bot, update, error):
 
 
 def main():
-    db.create_tables([Users, File, Publication, Vote, ParsingSource, VkPhoto], safe=True)
+    db.create_tables([File, Publication, Vote, ParsingSource, VkPhoto, Contributor, Moderator], safe=True)
     load_parsing_sources()
     updater = Updater(cfg.token)
     dp = updater.dispatcher

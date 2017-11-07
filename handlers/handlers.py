@@ -12,7 +12,7 @@ from telegram.update import Update
 
 from config import config as cfg
 from repository import files
-from repository.models import File, Users, Publication, Vote
+from repository.models import File, Publication, Vote, Contributor, Moderator
 from service import publication_service, parsing
 from service import image_service
 
@@ -52,13 +52,13 @@ class PhotoHandler(Handler):
 
     def handle(self, bot: Bot, update: Update):
         try:
-            user = ...
-            if not Users.select().where(Users.user_id == update.effective_user.id).exists():
-                user = Users.create(user_id=update.effective_user.id,
-                                    username=update.effective_user.username or update.effective_user.first_name,
-                                    points=0)
+            contributor = ...
+            if not Contributor.select().where(Contributor.user_id == update.effective_user.id).exists():
+                contributor = Contributor.create(user_id=update.effective_user.id,
+                                                 username=update.effective_user.username or update.effective_user.first_name,
+                                                 points=0)
             else:
-                user = Users.select().where(Users.user_id == update.effective_user.id).peek(1)
+                contributor = Contributor.select().where(Contributor.user_id == update.effective_user.id).peek(1)
             file_id = update.message.photo[-1].file_id
             tmp_file_path = files.save_by_telegram(file_id)
             file_hash = files.get_md5_hash(tmp_file_path)
@@ -78,7 +78,8 @@ class PhotoHandler(Handler):
                                            image_dhash=image_hashes.get('dHash'), image_ahash=image_hashes.get('aHash'),
                                            image_phash=image_hashes.get('pHash'), image_whash=image_hashes.get('wHash'),
                                            source='tg')
-                        publication = Publication(user=user, item=file, creation_date=datetime.datetime.now())
+                        publication = Publication(contributor=contributor, item=file,
+                                                  creation_date=datetime.datetime.now())
                         publication.save()
                         bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_RECEIVED)
                         publication_service.send_to_moderation(publication)
@@ -100,14 +101,14 @@ class VoteHandler(Handler):
 
     def handle(self, bot: Bot, update: Update, user_data, chat_data):
         data = json.loads(update.callback_query.data)
-        user = ...
-        if Users.select().where(Users.user_id == update.callback_query.from_user.id).exists():
-            user = Users.select().where(Users.user_id == update.callback_query.from_user.id).peek(1)
+        moderator = ...
+        if Moderator.select().where(Moderator.user_id == update.callback_query.from_user.id).exists():
+            moderator = Moderator.select().where(Moderator.user_id == update.callback_query.from_user.id).peek(1)
         else:
-            user = Users(user_id=update.callback_query.from_user.id,
-                         username=update.callback_query.from_user.username or update.callback_query.from_user.first_name)
-            user.save()
-        if Vote.select().where(Vote.user == user, Vote.publication_id == data.get('publication_id'),
+            moderator = Moderator(user_id=update.callback_query.from_user.id,
+                                  username=update.callback_query.from_user.username or update.callback_query.from_user.first_name)
+            moderator.save()
+        if Vote.select().where(Vote.moderator == moderator, Vote.publication_id == data.get('publication_id'),
                                Vote.points > 0).exists():
             bot.answer_callback_query(
                 callback_query_id=update.callback_query.id,
@@ -117,7 +118,7 @@ class VoteHandler(Handler):
         else:
             vote = Vote(
                 publication_id=data.get('publication_id'),
-                user=user,
+                moderator=moderator,
                 date=datetime.datetime.now(),
                 points=data.get('points'),
             )

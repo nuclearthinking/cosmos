@@ -16,11 +16,18 @@ class BaseModel(Model):
         database = db
 
 
-class Users(BaseModel):
+class Contributor(BaseModel):
     id = PrimaryKeyField()
     user_id = IntegerField(unique=True)
     username = CharField(unique=True)
-    points = IntegerField(null=True)
+    points = IntegerField(null=True, default=0)
+
+
+class Moderator(BaseModel):
+    id = PrimaryKeyField()
+    user_id = IntegerField(unique=True)
+    username = CharField(unique=True)
+    points = IntegerField(null=True, default=0)
 
 
 class File(BaseModel):
@@ -53,9 +60,9 @@ class File(BaseModel):
 class Vote(BaseModel):
     id = PrimaryKeyField()
     publication_id = IntegerField()
-    user = ForeignKeyField(Users)
     date = DateTimeField()
     points = IntegerField(default=0)
+    moderator = ForeignKeyField(Moderator, to_field=Moderator.id)
 
 
 class ParsingSource(BaseModel):
@@ -74,7 +81,6 @@ class VkPhoto(BaseModel):
 
 class Publication(BaseModel):
     id = PrimaryKeyField()
-    user = ForeignKeyField(Users, null=False)
     item = ForeignKeyField(File, null=False)
     creation_date = DateTimeField(null=False)
     publishing_date = DateTimeField(null=True)
@@ -83,3 +89,4 @@ class Publication(BaseModel):
     published = BooleanField(null=True)
     message_id = IntegerField(null=True)
     moderated = BooleanField(null=True)
+    contributor = ForeignKeyField(Contributor, to_field=Contributor.id)
