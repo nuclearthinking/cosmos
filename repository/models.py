@@ -40,6 +40,21 @@ class File(BaseModel):
     image_phash = CharField()
     image_whash = CharField()
 
+    @staticmethod
+    def check_hashes(hashes: dict):
+        query = File.select().where((File.image_ahash == hashes.get('aHash')) |
+                                    (File.image_dhash == hashes.get('dHash')) |
+                                    (File.image_phash == hashes.get('pHash')) |
+                                    (File.image_whash == hashes.get('wHash')))
+        with db_lock:
+            return query.exists()
+
+    @staticmethod
+    def exists_by_md5_hash(md5_hash):
+        query = File.select().where(File.hash_string == md5_hash)
+        with db_lock:
+            return query.exists()
+
 
 class Vote(BaseModel):
     id = PrimaryKeyField()
