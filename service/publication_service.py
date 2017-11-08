@@ -29,7 +29,9 @@ def send_to_moderation(publication: Publication):
     message = bot.send_photo(
         chat_id=cfg.moderation_chat,
         photo=file,
-        reply_markup=markup, timeout=30
+        reply_markup=markup,
+        timeout=30,
+        disable_notification=True
     )
     publication.message_id = message.message_id
     publication.save()

@@ -18,7 +18,8 @@ def moderate_queue():
     if VkPhoto.select().where(VkPhoto.processed == False).exists():
         references.bot.send_message(
             chat_id=cfg.moderation_chat,
-            text='Выгружаю 30 публикаций из Вконтакте'
+            text='Выгружаю 30 публикаций из Вконтакте',
+            disable_notification=True
         )
         small_images = 0
         duplicates = 0
@@ -65,7 +66,8 @@ def moderate_queue():
         logger.log(99, 'Moderation iteration completed')
         references.bot.send_message(
             chat_id=cfg.moderation_chat,
-            text=f'Выгрузка завершена, дубликатов {duplicates}, с низким разрешением {small_images}'
+            text=f'Выгрузка завершена, дубликатов {duplicates}, с низким разрешением {small_images}',
+            disable_notification=True
         )
     else:
         logger.log(99, 'Nothing to moderate for VkPhoto moderation')
