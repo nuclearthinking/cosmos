@@ -1,9 +1,9 @@
 from threading import Thread
 
+from config import config as cfg
 from parsers import vk_parser
 from repository.models import ParsingSource, VkPhoto, db_lock
 from service import references
-from config import config as cfg
 
 
 class Parser(Thread):

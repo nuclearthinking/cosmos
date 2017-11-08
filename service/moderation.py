@@ -1,16 +1,15 @@
 import logging
-from datetime import timedelta
-
 import time
+from datetime import timedelta
 from threading import Thread
 
 from future.backports import datetime
-from config import config as cfg
-from repository.models import *
+
+from parsers.vk_parser import get_photos_by_id
 from repository.files import *
+from repository.models import *
 from service import publication_service
 from service.image_service import get_image_hashes, check_size
-from parsers.vk_parser import get_photos_by_id
 from utils.utils import _round_publication_date
 
 logger = logging.getLogger(__name__)

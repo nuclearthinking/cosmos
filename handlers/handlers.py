@@ -13,8 +13,8 @@ from telegram.update import Update
 from config import config as cfg
 from repository import files
 from repository.models import File, Publication, Vote, Contributor, Moderator
-from service import publication_service, parsing
 from service import image_service
+from service import publication_service, parsing
 
 WELCOME_MESSAGE = 'Добро пожаловать, отправь мне фотографию, я передам её нашим модераторам'
 IMAGE_RECEIVED = 'Спасибо! Фотография передана модераторам канала.'

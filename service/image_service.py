@@ -1,9 +1,8 @@
 import logging
 import os
+
 import imagehash
 from PIL import Image
-
-from repository.models import File
 
 logger = logging.getLogger(__name__)
 

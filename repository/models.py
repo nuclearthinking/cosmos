@@ -1,7 +1,5 @@
-from _thread import RLock
 import threading
 
-import psycopg2
 from peewee import *
 
 db = PostgresqlDatabase('cosmos', user='cosmos', password="cosmos", threadlocals=True, use_speedups=True,

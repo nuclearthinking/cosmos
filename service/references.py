@@ -1,4 +1,5 @@
 from telegram.bot import Bot
+
 from service.parsing import Parser
 
 bot: Bot = ...

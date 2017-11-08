@@ -2,18 +2,16 @@
 https://api.vk.com/api.php?oauth=1&method=wall.get&v=5.69&filter=all&domain=awe.some&count=5&access_token=6c5f17a96c5f17a96c5f17a9ea6c07cb1066c5f6c5f17a935a7db63319cf8820c2e73b2
 """
 import json
+import logging
 import random
+import time
 from typing import List
 
-import logging
-
-import time
-
-from config import config as cfg
 from requests import get
 
-from parsers.vk_entity import Response, Photo, GetPhotosById
-from repository.models import VkPhoto, ParsingSource, db, db_lock
+from config import config as cfg
+from parsers.vk_entity import Response, GetPhotosById
+from repository.models import VkPhoto, ParsingSource, db_lock
 
 VK_API_URL = "https://api.vk.com/api.php"
 
