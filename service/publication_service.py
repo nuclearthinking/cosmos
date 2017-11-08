@@ -7,12 +7,11 @@ import time
 from datetime import timedelta
 from typing import List
 
-from telegram.bot import Bot
 from telegram.error import BadRequest
 from telegram.inline.inlinekeyboardbutton import InlineKeyboardButton
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
-import config
+from config import config as cfg
 from repository.models import Publication, Vote
 from service import references
 from utils.utils import _round_publication_date
@@ -23,14 +22,16 @@ logger = logging.getLogger(__name__)
 
 
 def send_to_moderation(publication: Publication):
-    bot = Bot(token=config.get_token())
+    bot = references.get_bot_reference()
     publication_id = publication.id
     file = open(file=publication.item.path, mode='rb')
     markup = get_reply_markup(publication_id)
     message = bot.send_photo(
-        chat_id=config.get_moderation_chat(),
+        chat_id=cfg.moderation_chat,
         photo=file,
-        reply_markup=markup
+        reply_markup=markup,
+        timeout=30,
+        disable_notification=True
     )
     publication.message_id = message.message_id
     publication.save()
@@ -65,26 +66,25 @@ def process_moderation(interval):
                 else:
                     votes = []
                 logger.log(99, f'Processing publication with id {publication.id}')
-                if datetime.datetime.now() > (
-                    publication.creation_date + timedelta(minutes=config.get_moderation_time_limit())) and len(
-                        votes) > 0 and publication.published is None:
+                moderation_end_time = publication.creation_date + timedelta(minutes=cfg.moderation_timeout)
+                if datetime.datetime.now() > moderation_end_time and len(votes) > 1 and publication.published is None:
                     score = 0.0
                     for x in [vote.points for vote in votes]:
                         score = score + x
                     score = round(score / len(votes), 2)
                     publication.score = score
                     publication.save()
-                    bot = Bot(config.get_token())
+                    bot = references.get_bot_reference()
                     try:
                         bot.edit_message_reply_markup(
-                            chat_id=config.get_moderation_chat(),
+                            chat_id=cfg.moderation_chat,
                             message_id=publication.message_id,
                             reply_markup=None
                         )
                     except BadRequest as e:
                         logger.log(99, f'Exception occurred while editing message with id {publication.message_id}')
                     message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
-                    if score > 3:
+                    if score > 3.49:
                         publication.moderated = True
                         publication.save()
                         moderated.append(publication)
@@ -94,7 +94,7 @@ def process_moderation(interval):
                         message_text += '\nФотография не прошла модерацию'
                     try:
                         bot.edit_message_caption(
-                            chat_id=config.get_moderation_chat(),
+                            chat_id=cfg.moderation_chat,
                             message_id=publication.message_id,
                             caption=message_text
                         )
@@ -104,7 +104,7 @@ def process_moderation(interval):
                 else:
                     on_moderation.append(publication)
             except Exception as e:
-                logger.log(99, f"Exception occured while processing publication {publication.id} \n {publication}")
+                logger.log(99, f"Exception occurred while processing publication with id {publication.id}")
         else:
             pass
         time.sleep(interval)
@@ -117,7 +117,7 @@ def publication_loop(interval):
     while 1:
         if datetime.datetime.now() >= publication_time:
             process_publication()
-            publication_time = publication_time + timedelta(minutes=config.get_publication_interval())
+            publication_time = publication_time + timedelta(minutes=cfg.publication_interval)
             logger.log(99, f'Next publication time {publication_time}')
         time.sleep(interval)
 
@@ -127,26 +127,29 @@ def process_publication():
     if moderated:
         bot = references.get_bot_reference()
         publication = moderated.pop(random.randrange(len(moderated)))
-        logger.log(99, f'publishing {publication}')
+        logger.log(99, f'Publishing publication with id {publication.id}')
         try:
             bot.send_photo(
-                chat_id=config.get_publication_channel(),
+                chat_id=cfg.publication_channel,
                 photo=open(
                     file=publication.item.path,
                     mode='rb'
                 )
             )
-            bot.edit_message_caption(
-                chat_id=config.get_moderation_chat(),
-                message_id=publication.message_id,
-                caption='Фотография опубликована'
-            )
+            try:
+                bot.edit_message_caption(
+                    chat_id=cfg.moderation_chat,
+                    message_id=publication.message_id,
+                    caption='Фотография опубликована'
+                )
+            except BadRequest as e:
+                logger.log(99, f'Message already changed')
             publication.published = True
             publication.publishing_date = datetime.datetime.now()
             publication.save()
-            logger.log(99, f'publishing {publication.id} successfully done')
+            logger.log(99, f'Publishing  publication with id {publication.id} successfully done')
         except Exception as e:
-            logger.log(99, f'Exception occured while publishing {publication}, {e}')
+            logger.log(99, f'Exception occurred while publishing publication with id {publication.id}', e)
 
 
 def start_publications():
