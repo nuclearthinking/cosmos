@@ -10,6 +10,7 @@ from repository.files import *
 from repository.models import *
 from service import publication_service
 from service.image_service import get_image_hashes, check_size
+from utils.utils import _round_publication_date
 
 logger = logging.getLogger(__name__)
 
@@ -78,9 +79,9 @@ def moderation_loop():
     moderation_processing_time = datetime.datetime.now()
     logger.log(99, f'Next moderation iteration time {moderation_processing_time}')
     while 1:
-        if datetime.datetime.now() >= moderation_processing_time:
+        if datetime.datetime.now() >= _round_publication_date(moderation_processing_time):
             moderate_queue()
-            moderation_processing_time = moderation_processing_time + timedelta(minutes=2)
+            moderation_processing_time = moderation_processing_time + timedelta(minutes=180)
             logger.log(99, f'Next moderation iteration time {moderation_processing_time}')
         time.sleep(10)
 
