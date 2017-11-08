@@ -29,7 +29,7 @@ def send_to_moderation(publication: Publication):
     message = bot.send_photo(
         chat_id=cfg.moderation_chat,
         photo=file,
-        reply_markup=markup
+        reply_markup=markup, timeout=30
     )
     publication.message_id = message.message_id
     publication.save()
@@ -82,7 +82,7 @@ def process_moderation(interval):
                     except BadRequest as e:
                         logger.log(99, f'Exception occurred while editing message with id {publication.message_id}')
                     message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
-                    if score > 3:
+                    if score > 3.49:
                         publication.moderated = True
                         publication.save()
                         moderated.append(publication)

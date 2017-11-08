@@ -10,7 +10,6 @@ from repository.files import *
 from repository.models import *
 from service import publication_service
 from service.image_service import get_image_hashes, check_size
-from utils.utils import _round_publication_date
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +49,14 @@ def moderate_queue():
                             image_dhash=hashes.get('dHash'), image_ahash=hashes.get('aHash'),
                             image_phash=hashes.get('pHash'), image_whash=hashes.get('wHash'), source='vk')
                 file.save()
-                contributor = Contributor.select().where(Contributor.username == 'system').first(1)
+                if Contributor.select().where(Contributor.username == 'system').exists():
+                    contributor = Contributor.select().where(Contributor.username == 'system').first(1)
+                else:
+                    contributor = Contributor.create(username='system', user_id=1, points=0)
                 publication = Publication.create(contributor=contributor, item=file,
                                                  creation_date=datetime.datetime.now())
                 publication_service.send_to_moderation(publication)
+                time.sleep(3)
             else:
                 continue
         for vk_photo in photos:
@@ -70,12 +73,12 @@ def moderate_queue():
 
 def moderation_loop():
     logger.log(99, 'Starting moderation loop')
-    moderation_processing_time = _round_publication_date(datetime.datetime.now())
+    moderation_processing_time = datetime.datetime.now()
     logger.log(99, f'Next moderation iteration time {moderation_processing_time}')
     while 1:
         if datetime.datetime.now() >= moderation_processing_time:
             moderate_queue()
-            moderation_processing_time = moderation_processing_time + timedelta(minutes=180)
+            moderation_processing_time = moderation_processing_time + timedelta(minutes=2)
             logger.log(99, f'Next moderation iteration time {moderation_processing_time}')
         time.sleep(10)
 
