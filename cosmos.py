@@ -1,21 +1,23 @@
-from logging import WARNING
+from logging import INFO
 
 from telegram.ext.updater import Updater
 
 from handlers.handlers import *
 from repository.models import *
-from service import publication_service, references, moderation
-
+from service import publication_service, references
 # logging
+from service.schedule_service import Schedule
+
 os.mkdir('logs') if not os.path.exists('logs') else None
 date = datetime.date.today()
 now_time = datetime.datetime.now()
 log_file_name = f"bot_{date}_{now_time.hour}-{now_time.minute}-{now_time.second}.log"
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    filename='/'.join(['logs', log_file_name]), level=WARNING)
-# logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    # filename='/'.join(['logs', log_file_name]),
+    level=INFO
+)
 logger = logging.getLogger(__name__)
-logger.isEnabledFor(99)
 
 handlers = [StartHandler().get_handler(),
             PhotoHandler().get_handler(),
@@ -36,8 +38,9 @@ def main():
     [dp.add_handler(handler) for handler in handlers]
     dp.add_error_handler(error)
     updater.start_polling()
-    publication_service.start_publications()
-    moderation.start()
+    publication_service.prepare_publications()
+    schedule = Schedule()
+    schedule.start()
     updater.idle()
 
 

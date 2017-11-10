@@ -1,7 +1,5 @@
 import logging
 import time
-from datetime import timedelta
-from threading import Thread
 
 from future.backports import datetime
 
@@ -10,7 +8,6 @@ from repository.files import *
 from repository.models import *
 from service import publication_service
 from service.image_service import get_image_hashes, check_size
-from utils.utils import _round_publication_date
 
 logger = logging.getLogger(__name__)
 
@@ -72,20 +69,3 @@ def moderate_queue():
         )
     else:
         logger.log(99, 'Nothing to moderate for VkPhoto moderation')
-
-
-def moderation_loop():
-    logger.log(99, 'Starting moderation loop')
-    moderation_processing_time = datetime.datetime.now()
-    logger.log(99, f'Next moderation iteration time {moderation_processing_time}')
-    while 1:
-        if datetime.datetime.now() >= _round_publication_date(moderation_processing_time):
-            moderate_queue()
-            moderation_processing_time = moderation_processing_time + timedelta(minutes=180)
-            logger.log(99, f'Next moderation iteration time {moderation_processing_time}')
-        time.sleep(10)
-
-
-def start():
-    moderation_thread = Thread(target=moderation_loop, name='parsing_moderation', daemon=True)
-    moderation_thread.start()
