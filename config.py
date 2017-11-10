@@ -38,5 +38,13 @@ class Configuration:
     def moderation_chat(self):
         return get_setting('moderators_channel')
 
+    @property
+    def votes_to_finish(self):
+        return get_setting('votes_to_finish')
+
+    @property
+    def points_to_publish(self):
+        return get_setting('points_to_publish')
+
 
 config = Configuration()
