@@ -2,6 +2,7 @@ import logging
 import time
 
 from future.backports import datetime
+from telegram.error import BadRequest
 
 from parsers.vk_parser import get_photos_by_id
 from repository.files import *
@@ -80,17 +81,20 @@ def clean_old_messages():
          (
              (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=2)) &
              (Publication.moderated == False)
-         )) & (Publication.message_id != None)
+         )) & (Publication.deleted == None)
     )
     if publication_for_clean.exists():
         for publication in publication_for_clean.first(50):
             try:
                 logger.info(f'Trying to delete message with id {publication.message_id}')
+                references.bot.edit_message_text()
                 references.bot.delete_message(
                     chat_id=cfg.moderation_chat,
                     message_id=publication.message_id
                 )
-                publication.message_id = None
-                publication.save()
-            except Exception as e:
-                logger.exception(f'Exception when deleting message with id {publication.message_id}')
+                logger.info(f'Message with id {publication.message_id} successfully cleaned')
+                publication.deleted = True
+            except BadRequest as e:
+                logger.exception(f'Exception when deleting message with id {publication.message_id}', exc_info=True)
+                publication.deleted = False
+            publication.save()

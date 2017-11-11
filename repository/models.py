@@ -85,3 +85,4 @@ class Publication(BaseModel):
     message_id = IntegerField(null=True)
     moderated = BooleanField(null=True)
     contributor = ForeignKeyField(Contributor, to_field=Contributor.id)
+    deleted = BooleanField(null=True)
