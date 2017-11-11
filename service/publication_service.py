@@ -83,7 +83,7 @@ def process_moderation():
                     except BadRequest as e:
                         logger.exception(f'Exception occurred while editing message with id {publication.message_id}')
                     message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
-                    if score > cfg.points_to_publish:
+                    if score >= cfg.points_to_publish:
                         publication.moderated = True
                         publication.save()
                         moderated.append(publication)
