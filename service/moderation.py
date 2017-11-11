@@ -69,3 +69,26 @@ def moderate_queue():
         )
     else:
         logger.log(99, 'Nothing to moderate for VkPhoto moderation')
+
+
+def clean_old_messages():
+    publication_for_clean = Publication.select().where(
+        (
+            (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=2)) &
+            (Publication.published == True)
+        ) |
+        (
+            (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=2)) &
+            (Publication.moderated == False)
+        )
+    )
+    if publication_for_clean.exists():
+        for publication in publication_for_clean.first(100):
+            try:
+                logger.info(f'Trying to delete message with id {publication.message_id}')
+                references.bot.delete_message(
+                    chat_id=cfg.moderation_chat,
+                    message_id=publication.message_id
+                )
+            except Exception as e:
+                logger.exception(f'Exception when deleting message with id {publication.message_id}')

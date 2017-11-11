@@ -5,16 +5,10 @@ from telegram.ext.updater import Updater
 from handlers.handlers import *
 from repository.models import *
 from service import publication_service, references
-# logging
 from service.schedule_service import Schedule
 
-os.mkdir('logs') if not os.path.exists('logs') else None
-date = datetime.date.today()
-now_time = datetime.datetime.now()
-log_file_name = f"bot_{date}_{now_time.hour}-{now_time.minute}-{now_time.second}.log"
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    # filename='/'.join(['logs', log_file_name]),
     level=INFO
 )
 logger = logging.getLogger(__name__)

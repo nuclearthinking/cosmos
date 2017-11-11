@@ -23,7 +23,7 @@ class Schedule:
                 start_date=utils.round_publication_date(datetime.datetime.now()),
                 second=0,
                 minute=0,
-                hour=3
+                hour='*/3'
             ),
             id='parsing_moderation_job',
             name='VK Parsing Moderation',
@@ -45,6 +45,13 @@ class Schedule:
             id='publications_job',
             name='Publications Job',
             max_instances=1
+        )
+        self.clean_job = self.scheduler.add_job(
+            func=moderation.clean_old_messages,
+            trigger=IntervalTrigger(
+                start_date=datetime.datetime.now(),
+                minutes=5
+            )
         )
 
     def start(self):
