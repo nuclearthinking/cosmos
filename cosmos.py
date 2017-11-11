@@ -1,5 +1,6 @@
 from logging import INFO
 
+from daemon.daemon import DaemonContext
 from telegram.ext.updater import Updater
 
 from handlers.handlers import *
@@ -52,4 +53,14 @@ def load_parsing_sources():
 
 
 if __name__ == '__main__':
+    log_file = open(log_file_name, 'w+')
+    script_working_dir = os.path.dirname(os.path.abspath(__file__))
+    daemon = DaemonContext(
+        detach_process=True,
+        stderr=log_file,
+        stdin=log_file,
+        working_directory=script_working_dir,
+        pidfile=os.path.join(script_working_dir, 'cosmos.pid')
+    )
+    daemon.open()
     main()

@@ -7,3 +7,4 @@ requests==2.18.4
 pydantic==0.5
 psycopg2
 apscheduler==3.4.0
+python-daemon==2.1.2
