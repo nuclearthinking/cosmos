@@ -27,19 +27,19 @@ def moderate_queue():
             if photo_url:
                 tmp_file_path = save_by_url(photo_url)
                 if not check_size(tmp_file_path):
-                    logger.log(99, f'Image size is too small')
+                    logger.info(f'Image size is too small')
                     os.remove(tmp_file_path)
                     small_images += 1
                     continue
                 md5_hash = get_md5_hash(tmp_file_path)
                 if File.exists_by_md5_hash(md5_hash):
-                    logger.log(99, f'MD5 Hash duplication, image from url {photo_url} already exists')
+                    logger.info(f'MD5 Hash duplication, image from url {photo_url} already exists')
                     os.remove(tmp_file_path)
                     duplicates += 1
                     continue
                 hashes = get_image_hashes(tmp_file_path)
                 if File.check_hashes(hashes):
-                    logger.log(99, f'ImageHash duplication, image from url {photo_url} already exists')
+                    logger.info(f'ImageHash duplication, image from url {photo_url} already exists')
                     os.remove(tmp_file_path)
                     duplicates += 1
                     continue
@@ -61,34 +61,36 @@ def moderate_queue():
         for vk_photo in photos:
             vk_photo.processed = True
             vk_photo.save()
-        logger.log(99, 'Moderation iteration completed')
+        logger.info('Moderation iteration completed')
         references.bot.send_message(
             chat_id=cfg.moderation_chat,
             text=f'Выгрузка завершена, дубликатов {duplicates}, с низким разрешением {small_images}',
             disable_notification=True
         )
     else:
-        logger.log(99, 'Nothing to moderate for VkPhoto moderation')
+        logger.info('Nothing to moderate for VkPhoto moderation')
 
 
 def clean_old_messages():
     publication_for_clean = Publication.select().where(
-        (
-            (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=2)) &
-            (Publication.published == True)
-        ) |
-        (
-            (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=2)) &
-            (Publication.moderated == False)
-        )
+        ((
+             (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=3)) &
+             (Publication.published == True)
+         ) |
+         (
+             (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=2)) &
+             (Publication.moderated == False)
+         )) & (Publication.message_id != None)
     )
     if publication_for_clean.exists():
-        for publication in publication_for_clean.first(100):
+        for publication in publication_for_clean.first(50):
             try:
                 logger.info(f'Trying to delete message with id {publication.message_id}')
                 references.bot.delete_message(
                     chat_id=cfg.moderation_chat,
                     message_id=publication.message_id
                 )
+                publication.message_id = None
+                publication.save()
             except Exception as e:
                 logger.exception(f'Exception when deleting message with id {publication.message_id}')

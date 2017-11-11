@@ -84,12 +84,10 @@ def parse_group(group: ParsingSource):
                                 insert_array.append({'photo_id': photo.id, 'owner_id': photo.owner_id,
                                                      'rnd': random.randint(1, 100000)})
                 if insert_array:
-                    with db_lock:
-                        VkPhoto.insert_many(insert_array).execute()
+                    VkPhoto.insert_many(insert_array).execute()
                 insert_array.clear()
-                with db_lock:
-                    group.parsed_posts = start_post + len(items)
-                    group.save()
+                group.parsed_posts = start_post + len(items)
+                group.save()
                 start_post += len(items)
                 end_post += len(items)
                 logger.log(99, f'Successfully fetched {len(items)}')

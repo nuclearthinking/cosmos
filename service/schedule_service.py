@@ -50,8 +50,9 @@ class Schedule:
             func=moderation.clean_old_messages,
             trigger=IntervalTrigger(
                 start_date=datetime.datetime.now(),
-                minutes=5
-            )
+                minutes=5,
+            ),
+            name='Cleanup Messages Job'
         )
 
     def start(self):
