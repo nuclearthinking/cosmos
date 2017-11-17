@@ -78,7 +78,8 @@ def process_moderation():
                         bot.edit_message_reply_markup(
                             chat_id=cfg.moderation_chat,
                             message_id=publication.message_id,
-                            reply_markup=None
+                            reply_markup=None,
+                            timeout=20
                         )
                     except BadRequest as e:
                         logger.exception(f'Exception occurred while editing message with id {publication.message_id}')
@@ -95,7 +96,8 @@ def process_moderation():
                         bot.edit_message_caption(
                             chat_id=cfg.moderation_chat,
                             message_id=publication.message_id,
-                            caption=message_text
+                            caption=message_text,
+                            timeout=20
                         )
                     except BadRequest as e:
                         logger.info(f'Error occurred while editing message with id {publication.message_id}')
@@ -126,7 +128,8 @@ def process_publication():
                 bot.edit_message_caption(
                     chat_id=cfg.moderation_chat,
                     message_id=publication.message_id,
-                    caption='Фотография опубликована'
+                    caption='Фотография опубликована',
+                    timeout=20
                 )
             except BadRequest as e:
                 logger.exception(f'Message already changed')
