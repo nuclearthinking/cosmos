@@ -87,7 +87,6 @@ def clean_old_messages():
         for publication in publication_for_clean.first(50):
             try:
                 logger.info(f'Trying to delete message with id {publication.message_id}')
-                references.bot.edit_message_text()
                 references.bot.delete_message(
                     chat_id=cfg.moderation_chat,
                     message_id=publication.message_id
