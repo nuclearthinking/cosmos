@@ -84,7 +84,7 @@ def clean_old_messages():
          )) & (Publication.deleted == None)
     )
     if publication_for_clean.exists():
-        for publication in publication_for_clean.first(50):
+        for publication in publication_for_clean.first(100):
             try:
                 logger.info(f'Trying to delete message with id {publication.message_id}')
                 references.bot.delete_message(
