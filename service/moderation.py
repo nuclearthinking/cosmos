@@ -75,11 +75,11 @@ def moderate_queue():
 def clean_old_messages():
     publication_for_clean = Publication.select().where(
         ((
-             (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=3)) &
+             (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=1)) &
              (Publication.published == True)
          ) |
          (
-             (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=2)) &
+             (Publication.creation_date <= datetime.datetime.now() - datetime.timedelta(days=1)) &
              (Publication.moderated == False)
          )) & (Publication.deleted == None)
     )
