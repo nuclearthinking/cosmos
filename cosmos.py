@@ -13,10 +13,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-handlers = [StartHandler().get_handler(),
-            PhotoHandler().get_handler(),
-            VoteHandler().get_handler(),
-            StartParsingHandler().get_handler()]
+handlers = [
+    StartHandler().get_handler(),
+    PhotoHandler().get_handler(),
+    VoteHandler().get_handler(),
+    StartParsingHandler().get_handler(),
+    QueueLength().get_handler()
+]
 
 
 def error(bot, update, error):
