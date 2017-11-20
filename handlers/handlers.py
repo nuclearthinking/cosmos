@@ -47,6 +47,29 @@ class StartHandler(Handler):
         return CommandHandler('start', self.handle, filters=self.filter)
 
 
+class QueueLength(Handler):
+    filter = Filters.chat(chat_id=cfg.moderation_chat) & Filters.command
+
+    def handle(self, bot: Bot, update: Update):
+        queue_length = publication_service.get_queue_length()
+        if queue_length:
+            in_hours = datetime.timedelta(hours=(queue_length * cfg.publication_interval / 60))
+            bot.send_message(
+                chat_id=update.effective_chat.id,
+                reply_to_message_id=update.effective_message.message_id,
+                text=f'Колличество постов в очереди {queue_length}\nРазмер очереди в часаx {in_hours}'
+            )
+        else:
+            bot.send_message(
+                chat_id=update.effective_chat.id,
+                reply_to_message_id=update.effective_message.message_id,
+                text=f'Очередь пуста, милорд :('
+            )
+
+    def get_handler(self):
+        return CommandHandler('queue', self.handle, filters=self.filter)
+
+
 class PhotoHandler(Handler):
     filter = Filters.photo & Filters.private
 

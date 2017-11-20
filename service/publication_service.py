@@ -18,6 +18,10 @@ moderated: List[Publication] = []
 logger = logging.getLogger(__name__)
 
 
+def get_queue_length():
+    return len(moderated)
+
+
 def send_to_moderation(publication: Publication):
     bot = references.get_bot_reference()
     publication_id = publication.id
