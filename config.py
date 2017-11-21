@@ -46,5 +46,9 @@ class Configuration:
     def points_to_publish(self):
         return get_setting('points_to_publish')
 
+    @property
+    def cookie_secret(self):
+        return get_setting('cookie_secret')
+
 
 config = Configuration()

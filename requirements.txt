@@ -7,3 +7,6 @@ requests==2.18.4
 pydantic==0.5
 psycopg2
 apscheduler==3.4.0
+tornado==4.5.2
+tornado-jinja2==0.2.4
+passlib==1.7.1
