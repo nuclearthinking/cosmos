@@ -13,6 +13,7 @@ import web.settings as Settings
 
 define("port", default=8888, help="run on the given port", type=int)
 jinja2_env = jinja2.Environment(loader=jinja2.FileSystemLoader(Settings.TEMPLATE_PATH), autoescape=False)
+jinja2_env.globals['STATIC_PREFIX'] = '/'
 jinja2_loader = Jinja2Loader(jinja2_env)
 
 

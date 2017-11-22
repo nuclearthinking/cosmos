@@ -1,29 +1,32 @@
-<div id="main-container">
-    <div id="main">
-        <h1>
-            <img alt="scubabook logo" src="{{ static_url(" img/logo.png") }}">
-        </h1>
-        <div id="login-form">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center margin-top-50">
+        <div class="col-5">
             <form action="/auth/login/" method="post" id="login_form">
-                <fieldset>
+                <div class="form-group">
                     <label for="username">Username</label>
-                    <input autocapitalize="off" autocorrect="off" class="text-input" id="username" name="username"
-                           tabindex="1" type="text" value="">
-                </fieldset>
-
-                <fieldset>
-                    <label for="password">Password</label>
-                    <input class="text-input" id="password" name="password" tabindex="2" type="password" value="">
-                </fieldset>
-                <fieldset>
-                    <span class="errormessage">{{errormessage}}</span>
-                </fieldset>
-
-                <div id="form_btn">
-                    <input id="signin-btn" class="btn btn-blue" type="submit" value="Sign In" tabindex="3">
-                    <!-- <a href="/sb/"><input id="inscription-btn" class="btn btn-red" value="Inscription" tabindex="3"></a> -->
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter username">
                 </div>
+                <div class="form-group">
+                    <label for="password1">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" minlength="4">
+                </div>
+                <button type="submit" form="login_form" class="btn btn-primary">Submit</button>
             </form>
         </div>
     </div>
-</div>  
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+</body>
+</html>

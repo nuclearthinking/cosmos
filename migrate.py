@@ -4,8 +4,12 @@ from repository.models import *
 
 migrator = PostgresqlMigrator(db)
 
+from passlib.hash import pbkdf2_sha256
+
+hash_pass = pbkdf2_sha256.hash("12345")
+
 operations = [
-    migrator.add_column('publication', 'deleted', BooleanField(null=True))
+    migrator.add_column('moderator', 'password', CharField(default=hash_pass)),
 ]
 
 
