@@ -23,9 +23,10 @@ class Contributor(BaseModel):
 
 class Moderator(BaseModel):
     id = PrimaryKeyField()
-    user_id = IntegerField(unique=True)
-    username = CharField(unique=True)
+    user_id = IntegerField(unique=True, null=True)
+    username = CharField(unique=True, null=True)
     points = IntegerField(null=True, default=0)
+    password = CharField(null=True)
 
 
 class File(BaseModel):
