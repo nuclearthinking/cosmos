@@ -8,3 +8,4 @@ __pycache__/
 handlers/__pycache__/
 repository/__pycache__/
 temp/
+/web/node_modules/

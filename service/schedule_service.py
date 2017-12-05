@@ -23,7 +23,7 @@ class Schedule:
                 start_date=utils.round_publication_date(datetime.datetime.now()),
                 second=0,
                 minute=0,
-                hour='10'
+                hour='8,10,12,14,16,18'
             ),
             id='parsing_moderation_job',
             name='VK Parsing Moderation',

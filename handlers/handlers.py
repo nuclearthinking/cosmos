@@ -93,9 +93,9 @@ class PhotoHandler(Handler):
                 else:
                     image_hashes = image_service.get_image_hashes(tmp_file_path)
                     if not File.select().where((File.image_whash == image_hashes.get('wHash')) |
-                                                       (File.image_phash == image_hashes.get('pHash')) |
-                                                       (File.image_dhash == image_hashes.get('dHash')) |
-                                                       (File.image_ahash == image_hashes.get('aHash'))).exists():
+                                               (File.image_phash == image_hashes.get('pHash')) |
+                                               (File.image_dhash == image_hashes.get('dHash')) |
+                                               (File.image_ahash == image_hashes.get('aHash'))).exists():
                         file_path = files.move_file(tmp_file_path)
                         file = File.create(path=file_path, telegram_id=file_id, hash_string=file_hash,
                                            image_dhash=image_hashes.get('dHash'), image_ahash=image_hashes.get('aHash'),
