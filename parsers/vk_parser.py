@@ -74,8 +74,7 @@ def parse_group(group: ParsingSource):
         end_post = group.parsed_posts
         while end_post < posts_count:
             logger.log(99, f'Fetching items from {start_post} to {start_post+100}')
-            items = get_wall_posts(start_post, 100, group.domain)
-            if items:
+            if items := get_wall_posts(start_post, 100, group.domain):
                 for item in items:
                     if item.attachments:
                         for attachment in item.attachments:
@@ -92,7 +91,7 @@ def parse_group(group: ParsingSource):
                 end_post += len(items)
                 logger.log(99, f'Successfully fetched {len(items)}')
             else:
-                logger.log(99, f'No new items ')
+                logger.log(99, 'No new items ')
                 break
             time.sleep(3)
         logger.log(99, f'Parsing source {group.domain} successfully completed')

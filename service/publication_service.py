@@ -56,62 +56,60 @@ def get_reply_markup(publication_id):
 
 
 def process_moderation():
-    if on_moderation:
-        try:
-            publication = on_moderation.pop(0)
-            if publication.message_id is None:
-                logger.error('Publication doesnt hav message_id, we cant moderate it, skipping')
-                pass
+    if not on_moderation:
+        return
+    try:
+        publication = on_moderation.pop(0)
+        if publication.message_id is None:
+            logger.error('Publication doesnt hav message_id, we cant moderate it, skipping')
+        else:
+            if Vote.select().where(Vote.publication_id == publication.id).exists():
+                votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
             else:
-                if Vote.select().where(Vote.publication_id == publication.id).exists():
-                    votes = Vote.select().where(Vote.publication_id == publication.id).first(100)
-                else:
-                    votes = []
-                logger.info(f'Processing publication with id {publication.id}')
-                moderation_end_time = publication.creation_date + timedelta(minutes=cfg.moderation_timeout)
-                if datetime.datetime.now() > moderation_end_time and len(
-                        votes) >= cfg.votes_to_finish and publication.published is None:
-                    score = 0.0
-                    for x in [vote.points for vote in votes]:
-                        score = score + x
-                    score = round(score / len(votes), 2)
-                    publication.score = score
+                votes = []
+            logger.info(f'Processing publication with id {publication.id}')
+            moderation_end_time = publication.creation_date + timedelta(minutes=cfg.moderation_timeout)
+            if datetime.datetime.now() > moderation_end_time and len(
+                    votes) >= cfg.votes_to_finish and publication.published is None:
+                score = 0.0
+                for x in [vote.points for vote in votes]:
+                    score = score + x
+                score = round(score / len(votes), 2)
+                publication.score = score
+                publication.save()
+                bot = references.get_bot_reference()
+                try:
+                    bot.edit_message_reply_markup(
+                        chat_id=cfg.moderation_chat,
+                        message_id=publication.message_id,
+                        reply_markup=None,
+                        timeout=20
+                    )
+                except BadRequest as e:
+                    logger.exception(f'Exception occurred while editing message with id {publication.message_id}')
+                message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
+                if score >= cfg.points_to_publish:
+                    publication.moderated = True
                     publication.save()
-                    bot = references.get_bot_reference()
-                    try:
-                        bot.edit_message_reply_markup(
-                            chat_id=cfg.moderation_chat,
-                            message_id=publication.message_id,
-                            reply_markup=None,
-                            timeout=20
-                        )
-                    except BadRequest as e:
-                        logger.exception(f'Exception occurred while editing message with id {publication.message_id}')
-                    message_text = f'Проголосовало: {len(votes)}\nСредняя оценка: {score}'
-                    if score >= cfg.points_to_publish:
-                        publication.moderated = True
-                        publication.save()
-                        moderated.append(publication)
-                    else:
-                        publication.moderated = False
-                        publication.save()
-                        message_text += '\nФотография не прошла модерацию'
-                    try:
-                        bot.edit_message_caption(
-                            chat_id=cfg.moderation_chat,
-                            message_id=publication.message_id,
-                            caption=message_text,
-                            timeout=20
-                        )
-                    except BadRequest as e:
-                        logger.info(f'Error occurred while editing message with id {publication.message_id}')
-
+                    moderated.append(publication)
                 else:
-                    on_moderation.append(publication)
-        except Exception as e:
-            logger.exception(f"Exception occurred while processing publication with id {publication.id}")
-    else:
-        pass
+                    publication.moderated = False
+                    publication.save()
+                    message_text += '\nФотография не прошла модерацию'
+                try:
+                    bot.edit_message_caption(
+                        chat_id=cfg.moderation_chat,
+                        message_id=publication.message_id,
+                        caption=message_text,
+                        timeout=20
+                    )
+                except BadRequest as e:
+                    logger.info(f'Error occurred while editing message with id {publication.message_id}')
+
+            else:
+                on_moderation.append(publication)
+    except Exception as e:
+        logger.exception(f"Exception occurred while processing publication with id {publication.id}")
 
 
 def process_publication():
@@ -136,7 +134,7 @@ def process_publication():
                     timeout=20
                 )
             except BadRequest as e:
-                logger.exception(f'Message already changed')
+                logger.exception('Message already changed')
             publication.published = True
             publication.publishing_date = datetime.datetime.now()
             publication.save()
@@ -146,18 +144,32 @@ def process_publication():
 
 
 def prepare_publications():
-    if Publication.select().where(Publication.moderated == None).exists():
+    if Publication.select().where(Publication.moderated is None).exists():
         logger.info('Fetching on_moderation publications from database')
-        on_moderation_publications = Publication.select().where(Publication.moderated == None).first(999)
+        on_moderation_publications = (
+            Publication.select()
+            .where(Publication.moderated is None)
+            .first(999)
+        )
+
         for publication in on_moderation_publications:
             on_moderation.append(publication)
         logger.info(f'Fetched {len(on_moderation_publications)} items')
     else:
         logger.warning('Doesnt exist\'s publications in moderation queue')
-    if Publication.select().where((Publication.moderated == True) & (Publication.published == None)):
+    if Publication.select().where(
+        (Publication.moderated == True) & (Publication.published is None)
+    ):
         logger.info('Fetching moderated publications from database')
-        moderated_publications = Publication.select().where(
-            (Publication.moderated == True) & (Publication.published == None)).first(999)
+        moderated_publications = (
+            Publication.select()
+            .where(
+                (Publication.moderated == True)
+                & (Publication.published is None)
+            )
+            .first(999)
+        )
+
         for publication in moderated_publications:
             moderated.append(publication)
         logger.info(f'Fetched {len(moderated_publications)} items')

@@ -24,10 +24,7 @@ def check_size(file_path):
     if os.path.exists(file_path):
         try:
             image = Image.open(file_path)
-            if image.width < 300 or image.height < 300:
-                return False
-            else:
-                return True
+            return image.width >= 300 and image.height >= 300
         except OSError as e:
             logger.error('Error when trying to open file', exc_info=True)
             return False

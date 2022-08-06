@@ -51,8 +51,7 @@ class QueueLength(Handler):
     filter = Filters.chat(chat_id=cfg.moderation_chat) & Filters.command
 
     def handle(self, bot: Bot, update: Update):
-        queue_length = publication_service.get_queue_length()
-        if queue_length:
+        if queue_length := publication_service.get_queue_length():
             in_hours = datetime.timedelta(hours=(queue_length * cfg.publication_interval / 60))
             bot.send_message(
                 chat_id=update.effective_chat.id,
@@ -63,7 +62,7 @@ class QueueLength(Handler):
             bot.send_message(
                 chat_id=update.effective_chat.id,
                 reply_to_message_id=update.effective_message.message_id,
-                text=f'Очередь пуста, милорд :('
+                text='Очередь пуста, милорд :(',
             )
 
     def get_handler(self):
@@ -76,42 +75,50 @@ class PhotoHandler(Handler):
     def handle(self, bot: Bot, update: Update):
         try:
             contributor = ...
-            if not Contributor.select().where(Contributor.user_id == update.effective_user.id).exists():
-                contributor = Contributor.create(user_id=update.effective_user.id,
-                                                 username=update.effective_user.username or update.effective_user.first_name,
-                                                 points=0)
-            else:
-                contributor = Contributor.select().where(Contributor.user_id == update.effective_user.id).peek(1)
+            contributor = (
+                Contributor.select()
+                .where(Contributor.user_id == update.effective_user.id)
+                .peek(1)
+                if Contributor.select()
+                .where(Contributor.user_id == update.effective_user.id)
+                .exists()
+                else Contributor.create(
+                    user_id=update.effective_user.id,
+                    username=update.effective_user.username
+                    or update.effective_user.first_name,
+                    points=0,
+                )
+            )
+
             file_id = update.message.photo[-1].file_id
             tmp_file_path = files.save_by_telegram(file_id)
             file_hash = files.get_md5_hash(tmp_file_path)
-            if not File.select().where(File.hash_string == file_hash).exists():
-                if not image_service.check_size(tmp_file_path):
-                    logger.log(99, f'Image too small')
-                    bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_TOO_SMALL)
-                    os.remove(tmp_file_path)
-                else:
-                    image_hashes = image_service.get_image_hashes(tmp_file_path)
-                    if not File.select().where((File.image_whash == image_hashes.get('wHash')) |
-                                               (File.image_phash == image_hashes.get('pHash')) |
-                                               (File.image_dhash == image_hashes.get('dHash')) |
-                                               (File.image_ahash == image_hashes.get('aHash'))).exists():
-                        file_path = files.move_file(tmp_file_path)
-                        file = File.create(path=file_path, telegram_id=file_id, hash_string=file_hash,
-                                           image_dhash=image_hashes.get('dHash'), image_ahash=image_hashes.get('aHash'),
-                                           image_phash=image_hashes.get('pHash'), image_whash=image_hashes.get('wHash'),
-                                           source='tg')
-                        publication = Publication(contributor=contributor, item=file,
-                                                  creation_date=datetime.datetime.now())
-                        publication.save()
-                        bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_RECEIVED)
-                        publication_service.send_to_moderation(publication)
-                    else:
-                        os.remove(tmp_file_path)
-                        bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_ALREADY_EXISTS)
-            else:
+            if File.select().where(File.hash_string == file_hash).exists():
                 os.remove(tmp_file_path)
                 bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_ALREADY_EXISTS)
+            elif not image_service.check_size(tmp_file_path):
+                logger.log(99, 'Image too small')
+                bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_TOO_SMALL)
+                os.remove(tmp_file_path)
+            else:
+                image_hashes = image_service.get_image_hashes(tmp_file_path)
+                if not File.select().where((File.image_whash == image_hashes.get('wHash')) |
+                                           (File.image_phash == image_hashes.get('pHash')) |
+                                           (File.image_dhash == image_hashes.get('dHash')) |
+                                           (File.image_ahash == image_hashes.get('aHash'))).exists():
+                    file_path = files.move_file(tmp_file_path)
+                    file = File.create(path=file_path, telegram_id=file_id, hash_string=file_hash,
+                                       image_dhash=image_hashes.get('dHash'), image_ahash=image_hashes.get('aHash'),
+                                       image_phash=image_hashes.get('pHash'), image_whash=image_hashes.get('wHash'),
+                                       source='tg')
+                    publication = Publication(contributor=contributor, item=file,
+                                              creation_date=datetime.datetime.now())
+                    publication.save()
+                    bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_RECEIVED)
+                    publication_service.send_to_moderation(publication)
+                else:
+                    os.remove(tmp_file_path)
+                    bot.send_message(chat_id=update.effective_chat.id, text=IMAGE_ALREADY_EXISTS)
         except Exception as e:
             logger.log(99, 'Exception occured during handling photo', e)
 
